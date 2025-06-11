@@ -22,9 +22,7 @@ import {
   Edit,
   Trash2,
   AlertTriangle,
-  Clock,
-  BanknoteIcon as Banknote
-} from 'lucide-react';
+  Clock} from 'lucide-react';
 
 interface Transaction {
   id: number;
@@ -210,15 +208,15 @@ const FinanceManagement = () => {
 
   const getStatusColor = (status: string) => {
     switch(status) {
-      case 'completed': return 'bg-green-100 text-green-800';
-      case 'pending': return 'bg-yellow-100 text-yellow-800';
-      case 'cancelled': return 'bg-red-100 text-red-800';
-      default: return 'bg-gray-100 text-gray-800';
+      case 'completed': return 'bg-[#2E8B57]/20 text-[#2E8B57] border-[#2E8B57]/30';
+      case 'pending': return 'bg-yellow-100 text-yellow-800 border-yellow-200';
+      case 'cancelled': return 'bg-red-100 text-red-800 border-red-200';
+      default: return 'bg-gray-100 text-gray-800 border-gray-200';
     }
   };
 
   const getTypeColor = (type: string) => {
-    return type === 'income' ? 'text-green-600' : 'text-red-600';
+    return type === 'income' ? 'text-[#2E8B57]' : 'text-red-600';
   };
 
   const filteredTransactions = transactions.filter(transaction => {
@@ -245,14 +243,14 @@ const FinanceManagement = () => {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-medium text-gray-600">Monthly Income</p>
-                  <p className="text-2xl font-bold text-green-600">{formatCurrency(metrics.totalIncome)}</p>
+                  <p className="text-2xl font-bold text-[#2E8B57]">{formatCurrency(metrics.totalIncome)}</p>
                   <p className="text-xs text-gray-500 mt-1">
                     <TrendingUp className="inline w-3 h-3 mr-1" />
                     +12% from last month
                   </p>
                 </div>
-                <div className="bg-green-100 p-3 rounded-full">
-                  <DollarSign className="w-6 h-6 text-green-600" />
+                <div className="bg-[#2E8B57]/20 p-3 rounded-full">
+                  <DollarSign className="w-6 h-6 text-[#2E8B57]" />
                 </div>
               </div>
             </CardContent>
@@ -281,15 +279,15 @@ const FinanceManagement = () => {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-medium text-gray-600">Net Profit</p>
-                  <p className={`text-2xl font-bold ${metrics.netProfit >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                  <p className={`text-2xl font-bold ${metrics.netProfit >= 0 ? 'text-[#2E8B57]' : 'text-red-600'}`}>
                     {formatCurrency(metrics.netProfit)}
                   </p>
                   <p className="text-xs text-gray-500 mt-1">
                     Current month profit
                   </p>
                 </div>
-                <div className={`p-3 rounded-full ${metrics.netProfit >= 0 ? 'bg-green-100' : 'bg-red-100'}`}>
-                  <Wallet className={`w-6 h-6 ${metrics.netProfit >= 0 ? 'text-green-600' : 'text-red-600'}`} />
+                <div className={`p-3 rounded-full ${metrics.netProfit >= 0 ? 'bg-[#2E8B57]/20' : 'bg-red-100'}`}>
+                  <Wallet className={`w-6 h-6 ${metrics.netProfit >= 0 ? 'text-[#2E8B57]' : 'text-red-600'}`} />
                 </div>
               </div>
             </CardContent>
@@ -330,7 +328,7 @@ const FinanceManagement = () => {
                   </div>
                   <Dialog open={isAddingTransaction} onOpenChange={setIsAddingTransaction}>
                     <DialogTrigger asChild>
-                      <Button>
+                      <Button className="bg-[#2E8B57] hover:bg-[#236446] text-white">
                         <Plus className="w-4 h-4 mr-2" />
                         Add Transaction
                       </Button>
@@ -352,14 +350,14 @@ const FinanceManagement = () => {
                 </div>
 
                 {/* Filters */}
-                <div className="flex flex-col md:flex-row gap-4">
+                <div className="flex flex-col mt-4 md:flex-row gap-4">
                   <div className="relative flex-1">
                     <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
                     <Input
                       placeholder="Search transactions..."
                       value={searchTerm}
                       onChange={(e) => setSearchTerm(e.target.value)}
-                      className="pl-10"
+                      className="pl-10 focus:ring-[#2E8B57] focus:border-[#2E8B57]"
                     />
                   </div>
                   <Select value={filterType} onValueChange={(value: 'all' | 'income' | 'expense') => setFilterType(value)}>
@@ -383,7 +381,7 @@ const FinanceManagement = () => {
                       <SelectItem value="cancelled">Cancelled</SelectItem>
                     </SelectContent>
                   </Select>
-                  <Button variant="outline">
+                  <Button variant="outline" className="border-[#2E8B57] text-[#2E8B57] hover:bg-[#2E8B57]/10">
                     <Download className="w-4 h-4 mr-2" />
                     Export
                   </Button>
@@ -474,11 +472,11 @@ const TransactionCard: React.FC<TransactionCardProps> = ({
   const student = transaction.studentId ? students.find(s => s.id === transaction.studentId) : null;
 
   return (
-    <div className="flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50">
+    <div className="flex items-center justify-between p-4 border rounded-lg hover:bg-[#2E8B57]/5 transition-colors">
       <div className="flex items-center space-x-4">
-        <div className={`p-2 rounded-full ${transaction.type === 'income' ? 'bg-green-100' : 'bg-red-100'}`}>
+        <div className={`p-2 rounded-full ${transaction.type === 'income' ? 'bg-[#2E8B57]/20' : 'bg-red-100'}`}>
           {transaction.type === 'income' ? 
-            <TrendingUp className="w-5 h-5 text-green-600" /> : 
+            <TrendingUp className="w-5 h-5 text-[#2E8B57]" /> : 
             <TrendingDown className="w-5 h-5 text-red-600" />
           }
         </div>
@@ -509,12 +507,12 @@ const TransactionCard: React.FC<TransactionCardProps> = ({
           <p className={`font-bold text-lg ${getTypeColor(transaction.type)}`}>
             {transaction.type === 'income' ? '+' : '-'}{formatCurrency(transaction.amount)}
           </p>
-          <Badge className={getStatusColor(transaction.status)}>
+          <Badge className={`${getStatusColor(transaction.status)} border`}>
             {transaction.status}
           </Badge>
         </div>
         <div className="flex space-x-2">
-          <Button size="sm" variant="outline" onClick={() => onEdit(transaction)}>
+          <Button size="sm" variant="outline" onClick={() => onEdit(transaction)} className="border-[#2E8B57] text-[#2E8B57] hover:bg-[#2E8B57]/10">
             <Edit className="w-4 h-4" />
           </Button>
           <Button size="sm" variant="outline" onClick={() => onDelete(transaction.id)}>
@@ -613,6 +611,7 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
             step="0.01"
             value={formData.amount}
             onChange={(e) => setFormData({...formData, amount: e.target.value})}
+            className="focus:ring-[#2E8B57] focus:border-[#2E8B57]"
             required
           />
         </div>
@@ -624,6 +623,7 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
             type="date"
             value={formData.date}
             onChange={(e) => setFormData({...formData, date: e.target.value})}
+            className="focus:ring-[#2E8B57] focus:border-[#2E8B57]"
             required
           />
         </div>
@@ -648,6 +648,7 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
             id="reference"
             value={formData.reference}
             onChange={(e) => setFormData({...formData, reference: e.target.value})}
+            className="focus:ring-[#2E8B57] focus:border-[#2E8B57]"
             placeholder="e.g., TF-2025-001"
           />
         </div>
@@ -678,6 +679,7 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
           id="description"
           value={formData.description}
           onChange={(e) => setFormData({...formData, description: e.target.value})}
+          className="focus:ring-[#2E8B57] focus:border-[#2E8B57]"
           rows={3}
           required
         />
@@ -687,7 +689,7 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
         <Button type="button" variant="outline" onClick={onCancel}>
           Cancel
         </Button>
-        <Button type="submit">
+        <Button type="submit" className="bg-[#2E8B57] hover:bg-[#236446] text-white">
           {isEditing ? 'Update Transaction' : 'Add Transaction'}
         </Button>
       </div>
@@ -702,12 +704,12 @@ interface BudgetManagementProps {
   formatCurrency: (amount: number) => string;
 }
 
-const BudgetManagement: React.FC<BudgetManagementProps> = ({ budgets, setBudgets, formatCurrency }) => {
+const BudgetManagement: React.FC<BudgetManagementProps> = ({ budgets, formatCurrency }) => {
   const getBudgetStatus = (budget: Budget) => {
     const percentage = (budget.spent / budget.allocated) * 100;
     if (percentage >= 90) return { status: 'danger', color: 'bg-red-500' };
     if (percentage >= 75) return { status: 'warning', color: 'bg-yellow-500' };
-    return { status: 'safe', color: 'bg-green-500' };
+    return { status: 'safe', color: 'bg-[#2E8B57]' };
   };
 
   return (
@@ -734,7 +736,7 @@ const BudgetManagement: React.FC<BudgetManagementProps> = ({ budgets, setBudgets
                     <p className="text-sm text-gray-500">
                       {formatCurrency(budget.spent)} / {formatCurrency(budget.allocated)}
                     </p>
-                    <p className={`text-sm font-medium ${remaining >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                    <p className={`text-sm font-medium ${remaining >= 0 ? 'text-[#2E8B57]' : 'text-red-600'}`}>
                       {remaining >= 0 ? 'Remaining: ' : 'Over budget: '}{formatCurrency(Math.abs(remaining))}
                     </p>
                   </div>
@@ -750,13 +752,13 @@ const BudgetManagement: React.FC<BudgetManagementProps> = ({ budgets, setBudgets
                 <div className="flex justify-between items-center mt-2">
                   <span className="text-sm text-gray-500">{percentage.toFixed(1)}% used</span>
                   {status === 'danger' && (
-                    <Badge className="bg-red-100 text-red-800">
+                    <Badge className="bg-red-100 text-red-800 border-red-200">
                       <AlertTriangle className="w-3 h-3 mr-1" />
                       Over Budget
                     </Badge>
                   )}
                   {status === 'warning' && (
-                    <Badge className="bg-yellow-100 text-yellow-800">
+                    <Badge className="bg-yellow-100 text-yellow-800 border-yellow-200">
                       <AlertTriangle className="w-3 h-3 mr-1" />
                       Near Limit
                     </Badge>
@@ -768,179 +770,6 @@ const BudgetManagement: React.FC<BudgetManagementProps> = ({ budgets, setBudgets
         </div>
       </CardContent>
     </Card>
-  );
-};
-
-// Financial Reports Component
-interface FinancialReportsProps {
-  transactions: Transaction[];
-  budgets: Budget[];
-  formatCurrency: (amount: number) => string;
-}
-
-const FinancialReports: React.FC<FinancialReportsProps> = ({ transactions, budgets, formatCurrency }) => {
-  const getMonthlyData = () => {
-    const months = [];
-    for (let i = 5; i >= 0; i--) {
-      const date = new Date();
-      date.setMonth(date.getMonth() - i);
-      const monthName = date.toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
-      
-      const monthTransactions = transactions.filter(t => {
-        const transactionDate = new Date(t.date);
-        return transactionDate.getMonth() === date.getMonth() &&
-               transactionDate.getFullYear() === date.getFullYear() &&
-               t.status === 'completed';
-      });
-
-      const income = monthTransactions
-        .filter(t => t.type === 'income')
-        .reduce((sum, t) => sum + t.amount, 0);
-
-      const expenses = monthTransactions
-        .filter(t => t.type === 'expense')
-        .reduce((sum, t) => sum + t.amount, 0);
-
-      months.push({ month: monthName, income, expenses, profit: income - expenses });
-    }
-    return months;
-  };
-
-  const getCategoryBreakdown = () => {
-    const categories: { [key: string]: { income: number; expense: number } } = {};
-    
-    transactions.filter(t => t.status === 'completed').forEach(transaction => {
-      if (!categories[transaction.category]) {
-        categories[transaction.category] = { income: 0, expense: 0 };
-      }
-      categories[transaction.category][transaction.type] += transaction.amount;
-    });
-
-    return Object.entries(categories).map(([category, data]) => ({
-      category,
-      ...data,
-      net: data.income - data.expense
-    }));
-  };
-
-  const monthlyData = getMonthlyData();
-  const categoryData = getCategoryBreakdown();
-
-  return (
-    <div className="space-y-6">
-      {/* Monthly Performance */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Monthly Financial Performance</CardTitle>
-          <CardDescription>Income, expenses, and profit trends over the last 6 months</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            {monthlyData.map((month, index) => (
-              <div key={index} className="grid grid-cols-4 gap-4 p-4 border rounded-lg">
-                <div>
-                  <p className="text-sm font-medium text-gray-600">{month.month}</p>
-                </div>
-                <div>
-                  <p className="text-sm text-gray-500">Income</p>
-                  <p className="font-medium text-green-600">{formatCurrency(month.income)}</p>
-                </div>
-                <div>
-                  <p className="text-sm text-gray-500">Expenses</p>
-                  <p className="font-medium text-red-600">{formatCurrency(month.expenses)}</p>
-                </div>
-                <div>
-                  <p className="text-sm text-gray-500">Profit</p>
-                  <p className={`font-medium ${month.profit >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                    {formatCurrency(month.profit)}
-                  </p>
-                </div>
-              </div>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Category Breakdown */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Category Analysis</CardTitle>
-          <CardDescription>Financial breakdown by category</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            {categoryData.map((category, index) => (
-              <div key={index} className="flex items-center justify-between p-4 border rounded-lg">
-                <div>
-                  <p className="font-medium">{category.category}</p>
-                </div>
-                <div className="flex space-x-6 text-sm">
-                  {category.income > 0 && (
-                    <div>
-                      <span className="text-gray-500">Income: </span>
-                      <span className="font-medium text-green-600">{formatCurrency(category.income)}</span>
-                    </div>
-                  )}
-                  {category.expense > 0 && (
-                    <div>
-                      <span className="text-gray-500">Expense: </span>
-                      <span className="font-medium text-red-600">{formatCurrency(category.expense)}</span>
-                    </div>
-                  )}
-                  <div>
-                    <span className="text-gray-500">Net: </span>
-                    <span className={`font-medium ${category.net >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                      {formatCurrency(category.net)}
-                    </span>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Budget vs Actual */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Budget vs Actual Spending</CardTitle>
-          <CardDescription>Compare budgeted amounts with actual spending</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            {budgets.map(budget => {
-              const variance = budget.allocated - budget.spent;
-              const variancePercentage = ((variance / budget.allocated) * 100);
-              
-              return (
-                <div key={budget.id} className="flex items-center justify-between p-4 border rounded-lg">
-                  <div>
-                    <p className="font-medium">{budget.category}</p>
-                    <p className="text-sm text-gray-500 capitalize">{budget.period} budget</p>
-                  </div>
-                  <div className="flex space-x-6 text-sm">
-                    <div>
-                      <span className="text-gray-500">Budgeted: </span>
-                      <span className="font-medium">{formatCurrency(budget.allocated)}</span>
-                    </div>
-                    <div>
-                      <span className="text-gray-500">Spent: </span>
-                      <span className="font-medium">{formatCurrency(budget.spent)}</span>
-                    </div>
-                    <div>
-                      <span className="text-gray-500">Variance: </span>
-                      <span className={`font-medium ${variance >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                        {formatCurrency(variance)} ({variancePercentage.toFixed(1)}%)
-                      </span>
-                    </div>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </CardContent>
-      </Card>
-    </div>
   );
 };
 
@@ -991,7 +820,7 @@ const StudentPayments: React.FC<StudentPaymentsProps> = ({ students, transaction
       <CardContent>
         <div className="space-y-4">
           {paymentSummary.map(summary => (
-            <div key={summary.student.id} className="flex items-center justify-between p-4 border rounded-lg">
+            <div key={summary.student.id} className="flex items-center justify-between p-4 border rounded-lg hover:bg-[#2E8B57]/5 transition-colors">
               <div>
                 <p className="font-medium">{summary.student.name}</p>
                 <p className="text-sm text-gray-500">{summary.student.studentId}</p>
@@ -999,7 +828,7 @@ const StudentPayments: React.FC<StudentPaymentsProps> = ({ students, transaction
               <div className="flex space-x-6 text-sm">
                 <div>
                   <p className="text-gray-500">Total Paid</p>
-                  <p className="font-medium text-green-600">{formatCurrency(summary.totalPaid)}</p>
+                  <p className="font-medium text-[#2E8B57]">{formatCurrency(summary.totalPaid)}</p>
                 </div>
                 <div>
                   <p className="text-gray-500">Pending</p>

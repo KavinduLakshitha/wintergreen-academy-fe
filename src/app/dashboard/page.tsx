@@ -5,27 +5,16 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { 
   Users, 
   DollarSign, 
   BookOpen, 
   TrendingUp, 
-  TrendingDown,
   Calendar,
   CheckCircle2,
-  XCircle,
   AlertTriangle,
-  Clock,
-  Target,
-  Award,
-  GraduationCap,
-  Building,
   Bell,
   ArrowUpRight,
-  ArrowDownRight,
-  MoreHorizontal,
-  Eye,
   Plus
 } from 'lucide-react';
 import { LineChart, Line, AreaChart, Area, BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
@@ -181,7 +170,6 @@ const AdminDashboard = () => {
 
   // Calculate metrics
   const totalStudents = students.length;
-  const activeStudents = students.filter(s => s.status === 'Active').length;
   const monthlyIncome = transactions.filter(t => t.type === 'income' && t.status === 'completed').reduce((sum, t) => sum + t.amount, 0);
   const monthlyExpenses = transactions.filter(t => t.type === 'expense' && t.status === 'completed').reduce((sum, t) => sum + t.amount, 0);
   const netProfit = monthlyIncome - monthlyExpenses;
@@ -213,7 +201,7 @@ const AdminDashboard = () => {
           <div className="flex justify-between items-center">
             <div>
               <h1 className="text-3xl font-bold text-gray-900">Dashboard</h1>
-              <p className="text-gray-600">Welcome back! Here's what's happening at the academy today.</p>
+              <p className="text-gray-600">Welcome back! Here&apos;s what&apos;s happening at the academy today.</p>
             </div>
             <div className="flex items-center space-x-4">
               <Button variant="outline">
@@ -270,7 +258,7 @@ const AdminDashboard = () => {
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-gray-600">Today's Attendance</p>
+                  <p className="text-sm font-medium text-gray-600">Today&apos;s Attendance</p>
                   <p className="text-2xl font-bold text-blue-600">{attendanceRate}%</p>
                   <p className="text-xs text-blue-600 flex items-center mt-1">
                     <CheckCircle2 className="w-3 h-3 mr-1" />

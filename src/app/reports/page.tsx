@@ -5,7 +5,6 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { 
@@ -19,7 +18,6 @@ import {
   BarChart3,
   PieChart,
   Filter,
-  Eye,
   Clock
 } from 'lucide-react';
 import * as XLSX from 'xlsx';
@@ -30,8 +28,8 @@ interface Student {
   name: string;
   studentId: string;
   email: string;
-  major: string;
-  year: string;
+  program: string;
+  level: string;
   status: 'Active' | 'Inactive' | 'Suspended';
   enrollmentDate: string;
   gpa: number;
@@ -71,44 +69,44 @@ const ReportsManagement = () => {
     {
       id: 1,
       name: "Kasun Perera",
-      studentId: "STU001",
+      studentId: "CNA001",
       email: "kasun.perera@email.com",
-      major: "Computer Science",
-      year: "Senior",
+      program: "Certified Nursing Assistant",
+      level: "Basic",
       status: "Active",
-      enrollmentDate: "2021-09-01",
+      enrollmentDate: "2025-01-15",
       gpa: 3.8
     },
     {
       id: 2,
       name: "Nimali Fernando",
-      studentId: "STU002",
+      studentId: "HHA002",
       email: "nimali.fernando@email.com",
-      major: "Business Administration",
-      year: "Junior",
+      program: "Home Health Aide",
+      level: "Intermediate",
       status: "Active",
-      enrollmentDate: "2022-01-15",
+      enrollmentDate: "2025-02-01",
       gpa: 3.6
     },
     {
       id: 3,
       name: "Tharushi Jayasinghe",
-      studentId: "STU003",
+      studentId: "MA003",
       email: "tharushi.jayasinghe@email.com",
-      major: "Psychology",
-      year: "Graduate",
+      program: "Medical Assistant",
+      level: "Advanced",
       status: "Active",
-      enrollmentDate: "2020-08-30",
+      enrollmentDate: "2024-12-10",
       gpa: 3.9
     }
   ]);
 
   const [attendanceRecords] = useState<AttendanceRecord[]>([
-    { id: 1, studentId: 1, date: "2025-06-08", status: "Present", course: "CS101", timeIn: "09:05" },
-    { id: 2, studentId: 2, date: "2025-06-08", status: "Present", course: "CS101", timeIn: "09:00" },
-    { id: 3, studentId: 3, date: "2025-06-08", status: "Absent", course: "CS101" },
-    { id: 4, studentId: 1, date: "2025-06-07", status: "Late", course: "CS102", timeIn: "14:15" },
-    { id: 5, studentId: 2, date: "2025-06-07", status: "Present", course: "CS102", timeIn: "14:00" }
+    { id: 1, studentId: 1, date: "2025-06-08", status: "Present", course: "BPC101", timeIn: "09:05" },
+    { id: 2, studentId: 2, date: "2025-06-08", status: "Present", course: "BPC101", timeIn: "09:00" },
+    { id: 3, studentId: 3, date: "2025-06-08", status: "Absent", course: "BPC101" },
+    { id: 4, studentId: 1, date: "2025-06-07", status: "Late", course: "VSM102", timeIn: "14:15" },
+    { id: 5, studentId: 2, date: "2025-06-07", status: "Present", course: "VSM102", timeIn: "14:00" }
   ]);
 
   const [transactions] = useState<Transaction[]>([
@@ -117,7 +115,7 @@ const ReportsManagement = () => {
       type: 'income',
       category: 'Tuition Fees',
       amount: 75000,
-      description: 'Monthly tuition payment - Kasun Perera',
+      description: 'CNA Program tuition - Kasun Perera',
       date: '2025-06-01',
       status: 'completed',
       studentId: 1,
@@ -128,7 +126,7 @@ const ReportsManagement = () => {
       type: 'income',
       category: 'Registration Fees',
       amount: 15000,
-      description: 'New student registration - Nimali Fernando',
+      description: 'HHA Program registration - Nimali Fernando',
       date: '2025-06-02',
       status: 'completed',
       studentId: 2,
@@ -139,7 +137,7 @@ const ReportsManagement = () => {
       type: 'expense',
       category: 'Salaries',
       amount: 250000,
-      description: 'Staff salaries for May 2025',
+      description: 'Nursing instructor salaries for May 2025',
       date: '2025-06-01',
       status: 'completed',
       reference: 'SAL-2025-05'
@@ -147,9 +145,11 @@ const ReportsManagement = () => {
   ]);
 
   const [courses] = useState<Course[]>([
-    { id: "CS101", name: "Data Structures", code: "CS101", schedule: "Mon, Wed 9:00 AM" },
-    { id: "CS102", name: "Machine Learning", code: "CS102", schedule: "Tue, Thu 2:00 PM" },
-    { id: "BUS201", name: "Marketing", code: "BUS201", schedule: "Mon, Fri 11:00 AM" }
+    { id: "BPC101", name: "Basic Patient Care", code: "BPC101", schedule: "Mon, Wed 9:00 AM" },
+    { id: "VSM102", name: "Vital Signs Monitoring", code: "VSM102", schedule: "Tue, Thu 2:00 PM" },
+    { id: "IC103", name: "Infection Control", code: "IC103", schedule: "Mon, Fri 11:00 AM" },
+    { id: "CS104", name: "Communication Skills", code: "CS104", schedule: "Wed, Fri 1:00 PM" },
+    { id: "PCA105", name: "Personal Care Assistance", code: "PCA105", schedule: "Tue, Thu 10:00 AM" }
   ]);
 
   const [reportFilters, setReportFilters] = useState({
@@ -157,7 +157,7 @@ const ReportsManagement = () => {
     endDate: new Date().toISOString().split('T')[0],
     course: 'all',
     status: 'all',
-    year: 'all'
+    level: 'all'
   });
 
   const formatCurrency = (amount: number) => {
@@ -175,16 +175,16 @@ const ReportsManagement = () => {
       filteredStudents = filteredStudents.filter(s => s.status === reportFilters.status);
     }
     
-    if (reportFilters.year !== 'all') {
-      filteredStudents = filteredStudents.filter(s => s.year === reportFilters.year);
+    if (reportFilters.level !== 'all') {
+      filteredStudents = filteredStudents.filter(s => s.level === reportFilters.level);
     }
 
     return filteredStudents.map(student => ({
       'Student ID': student.studentId,
       'Name': student.name,
       'Email': student.email,
-      'Major': student.major,
-      'Year': student.year,
+      'Program': student.program,
+      'Level': student.level,
       'Status': student.status,
       'Enrollment Date': student.enrollmentDate,
       'GPA': student.gpa
@@ -252,7 +252,7 @@ const ReportsManagement = () => {
 
   // Financial Reports
   const generateFinancialReport = () => {
-    let filteredTransactions = transactions.filter(transaction => {
+    const filteredTransactions = transactions.filter(transaction => {
       const transactionDate = new Date(transaction.date);
       const startDate = new Date(reportFilters.startDate);
       const endDate = new Date(reportFilters.endDate);
@@ -331,8 +331,8 @@ const ReportsManagement = () => {
       return {
         'Student ID': student.studentId,
         'Student Name': student.name,
-        'Major': student.major,
-        'Year': student.year,
+        'Program': student.program,
+        'Level': student.level,
         'Total Paid (LKR)': totalPaid,
         'Pending Amount (LKR)': pendingAmount,
         'Last Payment Date': lastPayment ? lastPayment.date : 'No payments',
@@ -344,7 +344,7 @@ const ReportsManagement = () => {
   };
 
   // Export to Excel function
-  const exportToExcel = (data: any[], filename: string, sheetName: string) => {
+  const exportToExcel = (data: Record<string, unknown>[], filename: string, sheetName: string) => {
     const workbook = XLSX.utils.book_new();
     const worksheet = XLSX.utils.json_to_sheet(data);
     
@@ -393,7 +393,9 @@ const ReportsManagement = () => {
                   <p className="text-2xl font-bold">{stats.totalStudents}</p>
                   <p className="text-xs text-gray-500">{stats.activeStudents} active</p>
                 </div>
-                <Users className="w-8 h-8 text-blue-500" />
+                <div className="bg-[#2E8B57]/20 p-3 rounded-full">
+                  <Users className="w-6 h-6 text-[#2E8B57]" />
+                </div>
               </div>
             </CardContent>
           </Card>
@@ -403,10 +405,12 @@ const ReportsManagement = () => {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-medium text-gray-600">Monthly Income</p>
-                  <p className="text-2xl font-bold text-green-600">{formatCurrency(stats.monthlyIncome)}</p>
+                  <p className="text-2xl font-bold text-[#2E8B57]">{formatCurrency(stats.monthlyIncome)}</p>
                   <p className="text-xs text-gray-500">Current month</p>
                 </div>
-                <DollarSign className="w-8 h-8 text-green-500" />
+                <div className="bg-[#2E8B57]/20 p-3 rounded-full">
+                  <DollarSign className="w-6 h-6 text-[#2E8B57]" />
+                </div>
               </div>
             </CardContent>
           </Card>
@@ -416,10 +420,12 @@ const ReportsManagement = () => {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-medium text-gray-600">Attendance Rate</p>
-                  <p className="text-2xl font-bold text-blue-600">{stats.attendanceRate}%</p>
+                  <p className="text-2xl font-bold text-[#2E8B57]">{stats.attendanceRate}%</p>
                   <p className="text-xs text-gray-500">Overall average</p>
                 </div>
-                <BarChart3 className="w-8 h-8 text-blue-500" />
+                <div className="bg-[#2E8B57]/20 p-3 rounded-full">
+                  <BarChart3 className="w-6 h-6 text-[#2E8B57]" />
+                </div>
               </div>
             </CardContent>
           </Card>
@@ -432,7 +438,9 @@ const ReportsManagement = () => {
                   <p className="text-2xl font-bold">{courses.length}</p>
                   <p className="text-xs text-gray-500">Active courses</p>
                 </div>
-                <BookOpen className="w-8 h-8 text-purple-500" />
+                <div className="bg-[#2E8B57]/20 p-3 rounded-full">
+                  <BookOpen className="w-6 h-6 text-[#2E8B57]" />
+                </div>
               </div>
             </CardContent>
           </Card>
@@ -456,6 +464,7 @@ const ReportsManagement = () => {
                   type="date"
                   value={reportFilters.startDate}
                   onChange={(e) => setReportFilters({...reportFilters, startDate: e.target.value})}
+                  className="focus:ring-[#2E8B57] focus:border-[#2E8B57]"
                 />
               </div>
               <div>
@@ -465,6 +474,7 @@ const ReportsManagement = () => {
                   type="date"
                   value={reportFilters.endDate}
                   onChange={(e) => setReportFilters({...reportFilters, endDate: e.target.value})}
+                  className="focus:ring-[#2E8B57] focus:border-[#2E8B57]"
                 />
               </div>
               <div>
@@ -498,18 +508,17 @@ const ReportsManagement = () => {
                 </Select>
               </div>
               <div>
-                <Label htmlFor="year">Academic Year</Label>
-                <Select value={reportFilters.year} onValueChange={(value) => setReportFilters({...reportFilters, year: value})}>
+                <Label htmlFor="level">Training Level</Label>
+                <Select value={reportFilters.level} onValueChange={(value) => setReportFilters({...reportFilters, level: value})}>
                   <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="all">All Years</SelectItem>
-                    <SelectItem value="Freshman">Freshman</SelectItem>
-                    <SelectItem value="Sophomore">Sophomore</SelectItem>
-                    <SelectItem value="Junior">Junior</SelectItem>
-                    <SelectItem value="Senior">Senior</SelectItem>
-                    <SelectItem value="Graduate">Graduate</SelectItem>
+                    <SelectItem value="all">All Levels</SelectItem>
+                    <SelectItem value="Basic">Basic</SelectItem>
+                    <SelectItem value="Intermediate">Intermediate</SelectItem>
+                    <SelectItem value="Advanced">Advanced</SelectItem>
+                    <SelectItem value="Certification">Certification</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -540,13 +549,13 @@ const ReportsManagement = () => {
                   <div className="space-y-4">
                     <div className="text-sm text-gray-600">
                       <p>• Student personal information</p>
-                      <p>• Academic details and GPA</p>
+                      <p>• Program details and GPA</p>
                       <p>• Enrollment status and dates</p>
                     </div>
                     <div className="flex space-x-2">
                       <Button 
                         onClick={() => exportToExcel(generateStudentReport(), 'Student_List_Report', 'Students')}
-                        className="flex-1"
+                        className="flex-1 bg-[#2E8B57] hover:bg-[#236446] text-white"
                       >
                         <Download className="w-4 h-4 mr-2" />
                         Download Excel
@@ -575,7 +584,7 @@ const ReportsManagement = () => {
                     <div className="flex space-x-2">
                       <Button 
                         onClick={() => exportToExcel(generateStudentPaymentReport(), 'Student_Payment_Report', 'Payments')}
-                        className="flex-1"
+                        className="flex-1 bg-[#2E8B57] hover:bg-[#236446] text-white"
                       >
                         <Download className="w-4 h-4 mr-2" />
                         Download Excel
@@ -608,7 +617,7 @@ const ReportsManagement = () => {
                     <div className="flex space-x-2">
                       <Button 
                         onClick={() => exportToExcel(generateAttendanceReport(), 'Detailed_Attendance_Report', 'Attendance')}
-                        className="flex-1"
+                        className="flex-1 bg-[#2E8B57] hover:bg-[#236446] text-white"
                       >
                         <Download className="w-4 h-4 mr-2" />
                         Download Excel
@@ -637,7 +646,7 @@ const ReportsManagement = () => {
                     <div className="flex space-x-2">
                       <Button 
                         onClick={() => exportToExcel(generateAttendanceSummaryReport(), 'Attendance_Summary_Report', 'Summary')}
-                        className="flex-1"
+                        className="flex-1 bg-[#2E8B57] hover:bg-[#236446] text-white"
                       >
                         <Download className="w-4 h-4 mr-2" />
                         Download Excel
@@ -670,7 +679,7 @@ const ReportsManagement = () => {
                     <div className="flex space-x-2">
                       <Button 
                         onClick={() => exportToExcel(generateFinancialReport(), 'Financial_Transactions_Report', 'Transactions')}
-                        className="flex-1"
+                        className="flex-1 bg-[#2E8B57] hover:bg-[#236446] text-white"
                       >
                         <Download className="w-4 h-4 mr-2" />
                         Download Excel
@@ -699,7 +708,7 @@ const ReportsManagement = () => {
                     <div className="flex space-x-2">
                       <Button 
                         onClick={() => exportToExcel(generateFinancialSummaryReport(), 'Financial_Summary_Report', 'Summary')}
-                        className="flex-1"
+                        className="flex-1 bg-[#2E8B57] hover:bg-[#236446] text-white"
                       >
                         <Download className="w-4 h-4 mr-2" />
                         Download Excel
@@ -719,34 +728,34 @@ const ReportsManagement = () => {
               </CardHeader>
               <CardContent>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {/* Enrollment Trends */}
+                  {/* Enrollment by Level */}
                   <div className="p-4 border rounded-lg">
-                    <h3 className="font-medium mb-2">Enrollment by Year</h3>
+                    <h3 className="font-medium mb-2">Enrollment by Training Level</h3>
                     <div className="space-y-2">
-                      {['Freshman', 'Sophomore', 'Junior', 'Senior', 'Graduate'].map(year => {
-                        const count = students.filter(s => s.year === year).length;
+                      {['Basic', 'Intermediate', 'Advanced', 'Certification'].map(level => {
+                        const count = students.filter(s => s.level === level).length;
                         const percentage = students.length > 0 ? (count / students.length * 100).toFixed(1) : '0';
                         return (
-                          <div key={year} className="flex justify-between text-sm">
-                            <span>{year}:</span>
-                            <span>{count} ({percentage}%)</span>
+                          <div key={level} className="flex justify-between text-sm">
+                            <span>{level}:</span>
+                            <span className="text-[#2E8B57] font-medium">{count} ({percentage}%)</span>
                           </div>
                         );
                       })}
                     </div>
                   </div>
 
-                  {/* Major Distribution */}
+                  {/* Program Distribution */}
                   <div className="p-4 border rounded-lg">
-                    <h3 className="font-medium mb-2">Students by Major</h3>
+                    <h3 className="font-medium mb-2">Students by Program</h3>
                     <div className="space-y-2">
-                      {Array.from(new Set(students.map(s => s.major))).map(major => {
-                        const count = students.filter(s => s.major === major).length;
+                      {Array.from(new Set(students.map(s => s.program))).map(program => {
+                        const count = students.filter(s => s.program === program).length;
                         const percentage = students.length > 0 ? (count / students.length * 100).toFixed(1) : '0';
                         return (
-                          <div key={major} className="flex justify-between text-sm">
-                            <span>{major}:</span>
-                            <span>{count} ({percentage}%)</span>
+                          <div key={program} className="flex justify-between text-sm">
+                            <span className="text-xs">{program}:</span>
+                            <span className="text-[#2E8B57] font-medium">{count} ({percentage}%)</span>
                           </div>
                         );
                       })}
@@ -760,10 +769,11 @@ const ReportsManagement = () => {
                       {['Present', 'Absent', 'Late', 'Excused'].map(status => {
                         const count = attendanceRecords.filter(r => r.status === status).length;
                         const percentage = attendanceRecords.length > 0 ? (count / attendanceRecords.length * 100).toFixed(1) : '0';
+                        const statusColor = status === 'Present' ? 'text-[#2E8B57]' : status === 'Absent' ? 'text-red-600' : status === 'Late' ? 'text-yellow-600' : 'text-blue-600';
                         return (
                           <div key={status} className="flex justify-between text-sm">
                             <span>{status}:</span>
-                            <span>{count} ({percentage}%)</span>
+                            <span className={`font-medium ${statusColor}`}>{count} ({percentage}%)</span>
                           </div>
                         );
                       })}
@@ -776,19 +786,19 @@ const ReportsManagement = () => {
                     <div className="space-y-2 text-sm">
                       <div className="flex justify-between">
                         <span>Total Income:</span>
-                        <span className="text-green-600">
+                        <span className="text-[#2E8B57] font-medium">
                           {formatCurrency(transactions.filter(t => t.type === 'income' && t.status === 'completed').reduce((sum, t) => sum + t.amount, 0))}
                         </span>
                       </div>
                       <div className="flex justify-between">
                         <span>Total Expenses:</span>
-                        <span className="text-red-600">
+                        <span className="text-red-600 font-medium">
                           {formatCurrency(transactions.filter(t => t.type === 'expense' && t.status === 'completed').reduce((sum, t) => sum + t.amount, 0))}
                         </span>
                       </div>
                       <div className="flex justify-between font-medium">
                         <span>Net Profit:</span>
-                        <span className={transactions.filter(t => t.type === 'income' && t.status === 'completed').reduce((sum, t) => sum + t.amount, 0) - transactions.filter(t => t.type === 'expense' && t.status === 'completed').reduce((sum, t) => sum + t.amount, 0) >= 0 ? 'text-green-600' : 'text-red-600'}>
+                        <span className={transactions.filter(t => t.type === 'income' && t.status === 'completed').reduce((sum, t) => sum + t.amount, 0) - transactions.filter(t => t.type === 'expense' && t.status === 'completed').reduce((sum, t) => sum + t.amount, 0) >= 0 ? 'text-[#2E8B57]' : 'text-red-600'}>
                           {formatCurrency(transactions.filter(t => t.type === 'income' && t.status === 'completed').reduce((sum, t) => sum + t.amount, 0) - transactions.filter(t => t.type === 'expense' && t.status === 'completed').reduce((sum, t) => sum + t.amount, 0))}
                         </span>
                       </div>
@@ -805,8 +815,8 @@ const ReportsManagement = () => {
                         const attendanceRate = courseRecords.length > 0 ? (presentCount / courseRecords.length * 100).toFixed(1) : '0';
                         return (
                           <div key={course.id} className="flex justify-between text-sm">
-                            <span>{course.code}:</span>
-                            <span>{attendanceRate}%</span>
+                            <span className="text-xs">{course.code}:</span>
+                            <span className="text-[#2E8B57] font-medium">{attendanceRate}%</span>
                           </div>
                         );
                       })}
@@ -820,10 +830,11 @@ const ReportsManagement = () => {
                       {['Active', 'Inactive', 'Suspended'].map(status => {
                         const count = students.filter(s => s.status === status).length;
                         const percentage = students.length > 0 ? (count / students.length * 100).toFixed(1) : '0';
+                        const statusColor = status === 'Active' ? 'text-[#2E8B57]' : status === 'Inactive' ? 'text-gray-600' : 'text-red-600';
                         return (
                           <div key={status} className="flex justify-between text-sm">
                             <span>{status}:</span>
-                            <span>{count} ({percentage}%)</span>
+                            <span className={`font-medium ${statusColor}`}>{count} ({percentage}%)</span>
                           </div>
                         );
                       })}
@@ -850,9 +861,9 @@ const ReportsManagement = () => {
                         XLSX.utils.book_append_sheet(workbook, financialSheet, 'Financial');
                         XLSX.utils.book_append_sheet(workbook, paymentsSheet, 'Payments');
                         
-                        XLSX.writeFile(workbook, `Complete_Academy_Report_${new Date().toISOString().split('T')[0]}.xlsx`);
+                        XLSX.writeFile(workbook, `Complete_Nursing_Academy_Report_${new Date().toISOString().split('T')[0]}.xlsx`);
                       }}
-                      className="w-full"
+                      className="w-full bg-[#2E8B57] hover:bg-[#236446] text-white"
                     >
                       <Download className="w-4 h-4 mr-2" />
                       Export Complete Report (All Data)
@@ -879,14 +890,14 @@ const ReportsManagement = () => {
                           {
                             'Report Type': 'Total Courses',
                             'Value': courses.length,
-                            'Details': 'Active courses offered'
+                            'Details': 'Active nursing courses offered'
                           }
                         ];
                         
                         exportToExcel(analyticsData, 'Analytics_Summary', 'Analytics');
                       }}
                       variant="outline"
-                      className="w-full"
+                      className="w-full border-[#2E8B57] text-[#2E8B57] hover:bg-[#2E8B57]/10"
                     >
                       <BarChart3 className="w-4 h-4 mr-2" />
                       Export Analytics Summary
@@ -926,11 +937,11 @@ const ReportsManagement = () => {
                   });
                   exportToExcel(monthlyAttendance, 'Current_Month_Attendance', 'Monthly_Attendance');
                 }}
-                className="h-auto p-4 flex flex-col items-start"
+                className="h-auto p-4 flex flex-col items-start border-[#2E8B57] text-[#2E8B57] hover:bg-[#2E8B57]/10"
               >
                 <Calendar className="w-6 h-6 mb-2" />
                 <span className="font-medium">Current Month Attendance</span>
-                <span className="text-xs text-gray-500">This month's attendance records</span>
+                <span className="text-xs text-gray-500">This month&apos;s attendance records</span>
               </Button>
 
               <Button 
@@ -941,14 +952,14 @@ const ReportsManagement = () => {
                     'Student ID': student.studentId,
                     'Name': student.name,
                     'Email': student.email,
-                    'Major': student.major,
-                    'Year': student.year,
+                    'Program': student.program,
+                    'Level': student.level,
                     'GPA': student.gpa,
                     'Enrollment Date': student.enrollmentDate
                   }));
                   exportToExcel(activeStudentReport, 'Active_Students_Report', 'Active_Students');
                 }}
-                className="h-auto p-4 flex flex-col items-start"
+                className="h-auto p-4 flex flex-col items-start border-[#2E8B57] text-[#2E8B57] hover:bg-[#2E8B57]/10"
               >
                 <Users className="w-6 h-6 mb-2" />
                 <span className="font-medium">Active Students</span>
@@ -976,11 +987,11 @@ const ReportsManagement = () => {
                   });
                   exportToExcel(monthlyFinancials, 'Current_Month_Financials', 'Monthly_Financials');
                 }}
-                className="h-auto p-4 flex flex-col items-start"
+                className="h-auto p-4 flex flex-col items-start border-[#2E8B57] text-[#2E8B57] hover:bg-[#2E8B57]/10"
               >
                 <DollarSign className="w-6 h-6 mb-2" />
                 <span className="font-medium">Monthly Financials</span>
-                <span className="text-xs text-gray-500">This month's transactions</span>
+                <span className="text-xs text-gray-500">This month&apos;s transactions</span>
               </Button>
 
               <Button 
@@ -1002,7 +1013,7 @@ const ReportsManagement = () => {
                   });
                   exportToExcel(pendingPayments, 'Pending_Payments_Report', 'Pending_Payments');
                 }}
-                className="h-auto p-4 flex flex-col items-start"
+                className="h-auto p-4 flex flex-col items-start border-[#2E8B57] text-[#2E8B57] hover:bg-[#2E8B57]/10"
               >
                 <Clock className="w-6 h-6 mb-2" />
                 <span className="font-medium">Pending Payments</span>

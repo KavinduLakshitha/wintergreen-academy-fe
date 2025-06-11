@@ -5,11 +5,11 @@ import { usePathname } from "next/navigation";
 import {
     Users,
     UserCheck,
-    BookOpen,
     LayoutDashboard,
     DollarSign,
     FileText,
-    LogOut
+    LogOut,
+    GraduationCap,
 } from "lucide-react";
 // import { useAuth } from "@/app/auth/auth-context"; // Not available yet
 import {
@@ -38,6 +38,7 @@ const navigationItems = [
     { name: "Attendance", href: "/attendance", icon: UserCheck },
     { name: "Finances", href: "/finances", icon: DollarSign },
     { name: "Profiles", href: "/profiles", icon: Users },
+    { name: "Courses", href: "/courses", icon: GraduationCap},
     { name: "Reports", href: "/reports", icon: FileText },
 ];
 
@@ -66,8 +67,8 @@ export function AppSidebar() {
                             src="/logo.webp"
                             alt="Company Logo"
                             width={120}
-                            height={40}
-                            className="h-12 w-auto"
+                            height={60}
+                            className="h-20 w-auto"
                             priority
                             quality={100}
                             unoptimized
