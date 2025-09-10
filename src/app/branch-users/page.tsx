@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { useRouter } from 'next/navigation'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -9,7 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Badge } from "@/components/ui/badge"
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
-import { Plus, Edit, Trash2, Search, UserCheck } from 'lucide-react'
+import { Plus, Edit, Trash2, Search } from 'lucide-react'
 import { toast } from 'sonner'
 
 interface User {
@@ -27,6 +28,7 @@ interface User {
 }
 
 export default function BranchUsersPage() {
+  const router = useRouter()
   const [users, setUsers] = useState<User[]>([])
   const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState('')
@@ -37,7 +39,15 @@ export default function BranchUsersPage() {
   const [currentUserRole, setCurrentUserRole] = useState('')
   const [currentUserBranch, setCurrentUserBranch] = useState('')
 
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<{
+    fullName: string
+    username: string
+    email: string
+    password?: string
+    role: string
+    nicOrPassport: string
+    contactNumber: string
+  }>({
     fullName: '',
     username: '',
     email: '',
@@ -48,6 +58,13 @@ export default function BranchUsersPage() {
   })
 
   useEffect(() => {
+    // Check authentication
+    const token = localStorage.getItem('token')
+    if (!token) {
+      router.push('/auth')
+      return
+    }
+
     // Get current user info from localStorage
     const userInfo = localStorage.getItem('user')
     if (userInfo) {
@@ -55,7 +72,7 @@ export default function BranchUsersPage() {
       setCurrentUserRole(user.role)
       setCurrentUserBranch(user.branchId)
     }
-    
+
     fetchBranchUsers()
   }, [])
 
@@ -71,6 +88,11 @@ export default function BranchUsersPage() {
       if (response.ok) {
         const data = await response.json()
         setUsers(data.users || [])
+      } else if (response.status === 401) {
+        toast.error('Session expired. Please login again.')
+        localStorage.removeItem('token')
+        localStorage.removeItem('user')
+        router.push('/auth')
       } else {
         toast.error('Failed to fetch branch users')
       }

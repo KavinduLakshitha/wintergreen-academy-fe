@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { useRouter } from 'next/navigation'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -21,6 +22,7 @@ interface Branch {
 }
 
 export default function BranchesPage() {
+  const router = useRouter()
   const [branches, setBranches] = useState<Branch[]>([])
   const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState('')
@@ -33,6 +35,12 @@ export default function BranchesPage() {
   })
 
   useEffect(() => {
+    // Check authentication
+    const token = localStorage.getItem('token')
+    if (!token) {
+      router.push('/auth')
+      return
+    }
     fetchBranches()
   }, [])
 
@@ -48,6 +56,11 @@ export default function BranchesPage() {
       if (response.ok) {
         const data = await response.json()
         setBranches(data.branches || [])
+      } else if (response.status === 401) {
+        toast.error('Session expired. Please login again.')
+        localStorage.removeItem('token')
+        localStorage.removeItem('user')
+        router.push('/auth')
       } else {
         toast.error('Failed to fetch branches')
       }

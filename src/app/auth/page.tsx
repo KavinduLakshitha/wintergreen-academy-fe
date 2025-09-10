@@ -44,7 +44,7 @@ export default function AuthPage() {
         setFetchingBranches(true);
         setError(null);
         try {
-        const response = await axios.get(`${API_URL}/auth/branches`, {
+        const response = await axios.get(`${API_URL}/api/auth/branches`, {
             params: { username: userid.trim() },
             headers: {
             'Accept': 'application/json',
@@ -93,11 +93,12 @@ export default function AuthPage() {
       if (mode == 'signin') {
           const branchId = branch ? branch : undefined
 
-          if (!branchId && branches.length > 0) {
+          // Only require branch selection for non-superadmin users
+          if (!branchId && branches.length > 0 && userid.toLowerCase() !== 'superadmin') {
               throw new Error('Please select a branch')
           }
 
-          const response = await axios.post(`${API_URL}/auth/login`, {
+          const response = await axios.post(`${API_URL}/api/auth/login`, {
               username: userid,
               password: password,
               branchId: branchId
@@ -200,7 +201,9 @@ export default function AuthPage() {
                     </div>
 
                     <div className="space-y-2">
-                            <Label className="text-sm font-medium dark:text-gray-300">Branch</Label>
+                            <Label className="text-sm font-medium dark:text-gray-300">
+                                Branch {userid.toLowerCase() === 'superadmin' ? '(Optional)' : ''}
+                            </Label>
                             <Select 
                                 onValueChange={setBranch} 
                                 value={branch}
@@ -212,6 +215,7 @@ export default function AuthPage() {
                                         fetchingBranches ? "Loading branches..." :
                                         !userid || userid.trim().length < 3 ? "Enter at least 3 characters" :
                                         branches.length === 0 ? "No branches available" :
+                                        userid.toLowerCase() === 'superadmin' ? "Select a Branch (Optional)" :
                                         "Select a Branch"
                                     } />
                                 </SelectTrigger>
@@ -238,7 +242,7 @@ export default function AuthPage() {
                     <Button 
                         type="submit" 
                         className="w-full h-11 text-base font-medium transition-all duration-200 bg-[#2E8B57] hover:bg-[#228B22] text-white cursor-pointer"
-                        disabled={isLoading || !branch || branches.length === 0}
+                        disabled={isLoading || (!branch && branches.length > 0 && userid.toLowerCase() !== 'superadmin') || branches.length === 0}
                     >
                         {isLoading ? 'Signing in...' : 'Sign In'}
                     </Button>

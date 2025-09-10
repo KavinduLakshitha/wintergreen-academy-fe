@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { useRouter } from 'next/navigation'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -32,6 +33,7 @@ interface Branch {
 }
 
 export default function UsersPage() {
+  const router = useRouter()
   const [users, setUsers] = useState<User[]>([])
   const [branches, setBranches] = useState<Branch[]>([])
   const [loading, setLoading] = useState(true)
@@ -41,7 +43,16 @@ export default function UsersPage() {
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
   const [editingUser, setEditingUser] = useState<User | null>(null)
 
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<{
+    fullName: string
+    username: string
+    email: string
+    password?: string
+    role: string
+    branchId: string
+    nicOrPassport: string
+    contactNumber: string
+  }>({
     fullName: '',
     username: '',
     email: '',
@@ -53,6 +64,12 @@ export default function UsersPage() {
   })
 
   useEffect(() => {
+    // Check authentication
+    const token = localStorage.getItem('token')
+    if (!token) {
+      router.push('/auth')
+      return
+    }
     fetchUsers()
     fetchBranches()
   }, [])
@@ -69,6 +86,11 @@ export default function UsersPage() {
       if (response.ok) {
         const data = await response.json()
         setUsers(data.users || [])
+      } else if (response.status === 401) {
+        toast.error('Session expired. Please login again.')
+        localStorage.removeItem('token')
+        localStorage.removeItem('user')
+        router.push('/auth')
       } else {
         toast.error('Failed to fetch users')
       }
