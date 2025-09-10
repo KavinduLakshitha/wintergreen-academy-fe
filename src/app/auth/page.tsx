@@ -9,12 +9,12 @@ import { Alert, AlertDescription } from "@/components/ui/alert"
 import { AlertCircle, Eye, EyeOff } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-// import axios from 'axios'
+import axios from 'axios'
 import Image from 'next/image'
 
 type AuthMode = 'signin' | 'forgotPassword'
 
-// const API_URL = process.env.NEXT_PUBLIC_API_URL
+const API_URL = process.env.NEXT_PUBLIC_API_URL
 
 interface Branch {
     id: number;
@@ -40,73 +40,43 @@ export default function AuthPage() {
         return;
     }
     
-    // const fetchBranches = async () => {
-    //     setFetchingBranches(true);
-    //     setError(null);
-    //     try {
-    //     const response = await axios.get(`${API_URL}/auth/branches`, {
-    //         params: { username: userid.trim() },
-    //         headers: {
-    //         'Accept': 'application/json',
-    //         'Content-Type': 'application/json'
-    //         }
-    //     });
-
-        
-    //     if (response.data && Array.isArray(response.data)) {
-    //         setBranches(response.data);
-            
-    //         // Auto-select if there's only one branch
-    //         if (response.data.length === 1) {
-    //         setBranch(response.data[0].id.toString());
-    //         } 
-    //         // Reset branch if the current selection is no longer valid
-    //         else if (branch && !response.data.some(br => br.id.toString() === branch)) {
-    //         setBranch("");
-    //         }
-    //     } else {
-    //         setBranches([]);
-    //         // Don't show error when there are simply no branches
-    //         if (userid.trim().length >= 3) {
-    //         setBranch("");
-    //         }
-    //     }
-    //     } catch (err) {
-    //     console.error('Error fetching branches:', err);
-    //     setBranches([]);
-    //     } finally {
-    //     setFetchingBranches(false);
-    //     }
-    // };
-
     const fetchBranches = async () => {
-      setFetchingBranches(true);
-      setError(null);
-      try {
-        await new Promise(resolve => setTimeout(resolve, 300));
-        const dummyBranches: Record<string, Branch[]> = {
-          'admin': [
-            { id: 1, name: 'Colombo' },
-            { id: 2, name: 'Kandy' }
-          ]
-        };
+        setFetchingBranches(true);
+        setError(null);
+        try {
+        const response = await axios.get(`${API_URL}/auth/branches`, {
+            params: { username: userid.trim() },
+            headers: {
+            'Accept': 'application/json',
+            'Content-Type': 'application/json'
+            }
+        });
 
-        const userBranches = dummyBranches[userid.trim().toLowerCase()] || [];
 
-        setBranches(userBranches);
+        if (response.data && Array.isArray(response.data)) {
+            setBranches(response.data);
 
-        if (userBranches.length === 1) {
-          setBranch(userBranches[0].id.toString());
-        } else if (branch && !userBranches.some(br => br.id.toString() === branch)) {
-          setBranch("");
+            // Auto-select if there's only one branch
+            if (response.data.length === 1) {
+            setBranch(response.data[0].id.toString());
+            }
+            // Reset branch if the current selection is no longer valid
+            else if (branch && !response.data.some(br => br.id.toString() === branch)) {
+            setBranch("");
+            }
+        } else {
+            setBranches([]);
+            // Don't show error when there are simply no branches
+            if (userid.trim().length >= 3) {
+            setBranch("");
+            }
         }
-
-      } catch (err) {
-        console.error('Dummy branch fetch error:', err);
+        } catch (err) {
+        console.error('Error fetching branches:', err);
         setBranches([]);
-      } finally {
+        } finally {
         setFetchingBranches(false);
-      }
+        }
     };
 
 
@@ -114,109 +84,47 @@ export default function AuthPage() {
     return () => clearTimeout(timeoutId);
     }, [userid, branch]);
 
-  // const handleSubmit = async (e: React.FormEvent) => {
-  //   e.preventDefault()
-  //   setError(null)
-  //   setIsLoading(true)
-
-  //   try {
-  //     if (mode == 'signin') {
-  //         const branchId = parseInt(branch)
-          
-  //         if (!branchId) {
-  //             throw new Error('Please select a branch')
-  //         }
-
-  //         const response = await axios.post(`${API_URL}/auth/login`, {
-  //             username: userid,
-  //             password: password,
-  //             branchId: branchId
-  //         })
-
-  //         const { token, user } = response.data
-  //         localStorage.setItem('token', token)
-  //         localStorage.setItem('user', JSON.stringify(user))
-
-  //         router.push('/dashboard')
-  //     }
-  //   } catch (err: unknown) {
-  //       if (axios.isAxiosError(err)) {
-  //           setError(
-  //               err.response?.data?.message || 
-  //               err.message || 
-  //               'An unexpected error occurred'
-  //           )
-  //       } else if (err instanceof Error) {
-  //           setError(err.message)
-  //       } else {
-  //           setError('An unexpected error occurred')
-  //       }
-  //   } finally {
-  //       setIsLoading(false)
-  //   }
-  // }
-
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError(null);
-    setIsLoading(true);
+    e.preventDefault()
+    setError(null)
+    setIsLoading(true)
 
     try {
-      if (mode === 'signin') {
-        const branchId = parseInt(branch);
+      if (mode == 'signin') {
+          const branchId = branch ? branch : undefined
 
-        if (!branchId) {
-          throw new Error('Please select a branch');
-        }
-
-        // Simulate network delay
-        await new Promise(resolve => setTimeout(resolve, 500));
-
-        // Dummy credential check
-        const validUsers = [
-          {
-            username: 'admin',
-            password: 'admin123',
-            branches: [1, 2],
-            name: 'Admin User'
+          if (!branchId && branches.length > 0) {
+              throw new Error('Please select a branch')
           }
-        ];
 
-        const userMatch = validUsers.find(
-          u =>
-            u.username === userid &&
-            u.password === password &&
-            u.branches.includes(branchId)
-        );
+          const response = await axios.post(`${API_URL}/auth/login`, {
+              username: userid,
+              password: password,
+              branchId: branchId
+          })
 
-        if (!userMatch) {
-          throw new Error('Invalid credentials or branch');
-        }
+          const { token, user } = response.data
+          localStorage.setItem('token', token)
+          localStorage.setItem('user', JSON.stringify(user))
 
-        // Simulate response
-        const token = 'dummy-token';
-        const user = {
-          id: 1,
-          username: userMatch.username,
-          branchId: branchId,
-          name: userMatch.name
-        };
-
-        localStorage.setItem('token', token);
-        localStorage.setItem('user', JSON.stringify(user));
-
-        router.push('/dashboard');
+          router.push('/dashboard')
       }
     } catch (err: unknown) {
-      if (err instanceof Error) {
-        setError(err.message);
-      } else {
-        setError('An unexpected error occurred');
-      }
+        if (axios.isAxiosError(err)) {
+            setError(
+                err.response?.data?.message ||
+                err.message ||
+                'An unexpected error occurred'
+            )
+        } else if (err instanceof Error) {
+            setError(err.message)
+        } else {
+            setError('An unexpected error occurred')
+        }
     } finally {
-      setIsLoading(false);
+        setIsLoading(false)
     }
-  };
+  }
 
 
   return (
