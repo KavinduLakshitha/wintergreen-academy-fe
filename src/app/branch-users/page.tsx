@@ -115,7 +115,7 @@ export default function BranchUsersPage() {
         },
         body: JSON.stringify({
           ...formData,
-          branchId: currentUserBranch // Force current user's branch
+          branch: currentUserBranch // Force current user's branch
         })
       })
 
@@ -292,6 +292,24 @@ export default function BranchUsersPage() {
                     type="email"
                     value={formData.email}
                     onChange={(e) => setFormData({...formData, email: e.target.value})}
+                    required
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="nicOrPassport">NIC or Passport</Label>
+                  <Input
+                    id="nicOrPassport"
+                    value={formData.nicOrPassport}
+                    onChange={(e) => setFormData({...formData, nicOrPassport: e.target.value})}
+                    required
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="contactNumber">Contact Number</Label>
+                  <Input
+                    id="contactNumber"
+                    value={formData.contactNumber}
+                    onChange={(e) => setFormData({...formData, contactNumber: e.target.value})}
                     required
                   />
                 </div>

@@ -42,6 +42,7 @@ export default function UsersPage() {
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false)
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
   const [editingUser, setEditingUser] = useState<User | null>(null)
+  const [currentUserRole, setCurrentUserRole] = useState('')
 
   const [formData, setFormData] = useState<{
     fullName: string
@@ -70,6 +71,14 @@ export default function UsersPage() {
       router.push('/auth')
       return
     }
+
+    // Get current user info from localStorage
+    const userInfo = localStorage.getItem('user')
+    if (userInfo) {
+      const user = JSON.parse(userInfo)
+      setCurrentUserRole(user.role)
+    }
+
     fetchUsers()
     fetchBranches()
   }, [])
@@ -129,7 +138,10 @@ export default function UsersPage() {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`
         },
-        body: JSON.stringify(formData)
+        body: JSON.stringify({
+          ...formData,
+          branch: formData.branchId
+        })
       })
 
       if (response.ok) {
@@ -246,6 +258,23 @@ export default function UsersPage() {
     }
   }
 
+  const getAvailableRoles = () => {
+    if (currentUserRole === 'superAdmin') {
+      return [
+        { value: 'superAdmin', label: 'Super Admin' },
+        { value: 'admin', label: 'Admin' },
+        { value: 'moderator', label: 'Moderator' },
+        { value: 'staff', label: 'Staff' }
+      ]
+    } else if (currentUserRole === 'admin') {
+      return [
+        { value: 'moderator', label: 'Moderator' },
+        { value: 'staff', label: 'Staff' }
+      ]
+    }
+    return []
+  }
+
   if (loading) {
     return <div className="flex items-center justify-center h-64">Loading...</div>
   }
@@ -300,6 +329,24 @@ export default function UsersPage() {
                 />
               </div>
               <div>
+                <Label htmlFor="nicOrPassport">NIC or Passport</Label>
+                <Input
+                  id="nicOrPassport"
+                  value={formData.nicOrPassport}
+                  onChange={(e) => setFormData({...formData, nicOrPassport: e.target.value})}
+                  required
+                />
+              </div>
+              <div>
+                <Label htmlFor="contactNumber">Contact Number</Label>
+                <Input
+                  id="contactNumber"
+                  value={formData.contactNumber}
+                  onChange={(e) => setFormData({...formData, contactNumber: e.target.value})}
+                  required
+                />
+              </div>
+              <div>
                 <Label htmlFor="password">Password</Label>
                 <Input
                   id="password"
@@ -316,9 +363,11 @@ export default function UsersPage() {
                     <SelectValue placeholder="Select role" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="admin">Admin</SelectItem>
-                    <SelectItem value="moderator">Moderator</SelectItem>
-                    <SelectItem value="staff">Staff</SelectItem>
+                    {getAvailableRoles().map((role) => (
+                      <SelectItem key={role.value} value={role.value}>
+                        {role.label}
+                      </SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
               </div>
@@ -479,9 +528,11 @@ export default function UsersPage() {
                   <SelectValue placeholder="Select role" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="admin">Admin</SelectItem>
-                  <SelectItem value="moderator">Moderator</SelectItem>
-                  <SelectItem value="staff">Staff</SelectItem>
+                  {getAvailableRoles().map((role) => (
+                    <SelectItem key={role.value} value={role.value}>
+                      {role.label}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </div>
