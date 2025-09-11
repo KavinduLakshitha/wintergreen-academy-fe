@@ -26,6 +26,8 @@ interface User {
   } | null
   isActive: boolean
   createdAt: string
+  nicOrPassport?: string
+  contactNumber?: string
 }
 
 export default function BranchUsersPage() {
@@ -71,7 +73,7 @@ export default function BranchUsersPage() {
     if (userInfo) {
       const user = JSON.parse(userInfo)
       setCurrentUserRole(user.role)
-      setCurrentUserBranch(user.branchId)
+      setCurrentUserBranch(user.branch?.id || '')
     }
 
     fetchBranchUsers()
@@ -150,8 +152,8 @@ export default function BranchUsersPage() {
       email: user.email,
       password: '',
       role: user.role,
-      nicOrPassport: '',
-      contactNumber: ''
+      nicOrPassport: user.nicOrPassport || '',
+      contactNumber: user.contactNumber || ''
     })
     setIsEditDialogOpen(true)
   }
@@ -163,6 +165,16 @@ export default function BranchUsersPage() {
     try {
       const token = localStorage.getItem('token')
       const updateData = { ...formData }
+
+      // Remove empty fields to avoid validation issues
+      Object.keys(updateData).forEach(key => {
+        const value = (updateData as any)[key]
+        if (value === '' || value === null || value === undefined) {
+          delete (updateData as any)[key]
+        }
+      })
+
+      // Always remove password if empty
       if (!updateData.password) {
         delete updateData.password
       }

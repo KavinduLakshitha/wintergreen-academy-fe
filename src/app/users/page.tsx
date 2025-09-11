@@ -26,6 +26,8 @@ interface User {
   } | null
   isActive: boolean
   createdAt: string
+  nicOrPassport?: string
+  contactNumber?: string
 }
 
 interface Branch {
@@ -177,8 +179,8 @@ export default function UsersPage() {
       password: '',
       role: user.role,
       branchId: user.branch?.id || '',
-      nicOrPassport: '',
-      contactNumber: ''
+      nicOrPassport: user.nicOrPassport || '',
+      contactNumber: user.contactNumber || ''
     })
     setIsEditDialogOpen(true)
   }
@@ -190,6 +192,16 @@ export default function UsersPage() {
     try {
       const token = localStorage.getItem('token')
       const updateData = { ...formData }
+
+      // Remove empty fields to avoid validation issues
+      Object.keys(updateData).forEach(key => {
+        const value = (updateData as any)[key]
+        if (value === '' || value === null || value === undefined) {
+          delete (updateData as any)[key]
+        }
+      })
+
+      // Always remove password if empty
       if (!updateData.password) {
         delete updateData.password
       }
