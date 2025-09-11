@@ -12,6 +12,7 @@ import { Badge } from "@/components/ui/badge"
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { Plus, Edit, Trash2, Search } from 'lucide-react'
 import { toast } from 'sonner'
+import { getErrorMessage } from '@/utils/errorHandling'
 
 interface User {
   id: string
@@ -160,7 +161,7 @@ export default function UsersPage() {
         fetchUsers()
       } else {
         const error = await response.json()
-        toast.error(error.message || 'Failed to create user')
+        toast.error(getErrorMessage(error))
       }
     } catch (error) {
       toast.error('Error creating user')
@@ -209,7 +210,7 @@ export default function UsersPage() {
         fetchUsers()
       } else {
         const error = await response.json()
-        toast.error(error.message || 'Failed to update user')
+        toast.error(getErrorMessage(error))
       }
     } catch (error) {
       toast.error('Error updating user')
