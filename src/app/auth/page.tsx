@@ -93,8 +93,8 @@ export default function AuthPage() {
       if (mode == 'signin') {
           const branchId = branch ? branch : undefined
 
-          // Only require branch selection for non-superadmin users
-          if (!branchId && branches.length > 0 && userid.toLowerCase() !== 'superadmin') {
+          // Require branch selection for all users when branches are available
+          if (!branchId && branches.length > 0) {
               throw new Error('Please select a branch')
           }
 
@@ -202,7 +202,7 @@ export default function AuthPage() {
 
                     <div className="space-y-2">
                             <Label className="text-sm font-medium dark:text-gray-300">
-                                Branch {userid.toLowerCase() === 'superadmin' ? '(Optional)' : ''}
+                                Branch
                             </Label>
                             <Select 
                                 onValueChange={setBranch} 
@@ -215,7 +215,6 @@ export default function AuthPage() {
                                         fetchingBranches ? "Loading branches..." :
                                         !userid || userid.trim().length < 3 ? "Enter at least 3 characters" :
                                         branches.length === 0 ? "No branches available" :
-                                        userid.toLowerCase() === 'superadmin' ? "Select a Branch (Optional)" :
                                         "Select a Branch"
                                     } />
                                 </SelectTrigger>
