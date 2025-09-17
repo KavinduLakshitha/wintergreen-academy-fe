@@ -93,6 +93,10 @@ const StudentProfileManagement = () => {
       if (searchTerm) params.search = searchTerm;
       if (statusFilter && statusFilter !== 'all') params.status = statusFilter;
       if (courseFilter && courseFilter !== 'all') params.courseId = courseFilter;
+      // Add branch filtering for SuperAdmin
+      if (currentUser?.role === 'superAdmin' && selectedBranch && selectedBranch !== 'all') {
+        params.branchId = selectedBranch;
+      }
 
       const response = await getStudents(params);
       setStudents(response.students);
@@ -107,7 +111,7 @@ const StudentProfileManagement = () => {
         toast.error(getErrorMessage(error));
       }
     }
-  }, [searchTerm, statusFilter, courseFilter, router]);
+  }, [searchTerm, statusFilter, courseFilter, selectedBranch, currentUser?.role, router]);
 
   // Fetch all data
   const fetchData = useCallback(async () => {
@@ -196,8 +200,13 @@ const StudentProfileManagement = () => {
       setFilteredCourses(courses);
     } else {
       const filtered = courses.filter(course => {
+        // Check for 'all' branch courses (should always be included)
+        if (typeof course.branch === 'string' && course.branch === 'all') {
+          return true;
+        }
+        // Check for branch-specific courses
         if (typeof course.branch === 'string') {
-          return course.branch === 'all' || course.branch === selectedBranch;
+          return course.branch === selectedBranch;
         } else if (course.branch && typeof course.branch === 'object') {
           return course.branch._id === selectedBranch;
         }
@@ -214,7 +223,7 @@ const StudentProfileManagement = () => {
     }, 300);
 
     return () => clearTimeout(delayedSearch);
-  }, [searchTerm, statusFilter, courseFilter, fetchStudents]);
+  }, [searchTerm, statusFilter, courseFilter, selectedBranch, fetchStudents]);
 
   const filteredStudents = students.filter(student => {
     const matchesSearch = student.fullName.toLowerCase().includes(searchTerm.toLowerCase()) ||
