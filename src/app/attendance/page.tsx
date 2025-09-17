@@ -115,17 +115,29 @@ const AttendanceManagement = () => {
     }
   };
 
-  const loadCourses = async (userData: User) => {
+  const loadCourses = async (userData: User, branchFilter?: string) => {
     try {
+      let branchId: string | undefined;
+
+      if (userData.role === 'superAdmin') {
+        // For SuperAdmin, use branch filter if provided and not 'all'
+        branchId = branchFilter && branchFilter !== 'all' ? branchFilter : undefined;
+      } else {
+        // For other roles, use their branch
+        branchId = userData.branch?.id;
+      }
+
       const result = await getCourses({
         limit: 100,
-        branchId: userData.role === 'superAdmin' ? undefined : userData.branch?.id
+        branchId: branchId
       });
-      
+
       if (result?.courses) {
         setCourses(result.courses);
+        // Reset course selection when branch changes
+        setSelectedCourse('');
         // Auto-select first course if available
-        if (result.courses.length > 0 && !selectedCourse) {
+        if (result.courses.length > 0) {
           setSelectedCourse(result.courses[0]._id);
         }
       }
@@ -148,6 +160,13 @@ const AttendanceManagement = () => {
       setError('Failed to load branches');
     }
   };
+
+  // Reload courses when branch selection changes (for SuperAdmin)
+  useEffect(() => {
+    if (user && user.role === 'superAdmin') {
+      loadCourses(user, selectedBranch);
+    }
+  }, [selectedBranch, user]);
 
   // Load students when course, date, or branch changes
   useEffect(() => {
@@ -352,6 +371,14 @@ const AttendanceManagement = () => {
     return user?.role && ['superAdmin', 'admin', 'moderator'].includes(user.role);
   };
 
+  // Check if attendance can be marked for a specific student
+  const canMarkStudentAttendance = (student: any) => {
+    if (!canMarkAttendance()) return false;
+
+    // If student has saved attendance (not just marked locally), disable buttons
+    return !student.savedAttendance;
+  };
+
   const canEditAttendance = () => {
     return user?.role && ['superAdmin', 'admin'].includes(user.role);
   };
@@ -437,9 +464,9 @@ const AttendanceManagement = () => {
                     <SelectValue placeholder="Select branch" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="all">All Branches</SelectItem>
-                    {branches.map(branch => (
-                      <SelectItem key={branch._id} value={branch._id}>
+                    <SelectItem key="all-branches" value="all">All Branches</SelectItem>
+                    {branches.map((branch, index) => (
+                      <SelectItem key={`branch-${branch._id}-${index}`} value={branch._id}>
                         {branch.name}
                       </SelectItem>
                     ))}
@@ -529,8 +556,8 @@ const AttendanceManagement = () => {
       {/* Main Content Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab}>
         <TabsList className="grid w-full grid-cols-2">
-          <TabsTrigger value="mark">Mark Attendance</TabsTrigger>
-          <TabsTrigger value="view">View Records</TabsTrigger>
+          <TabsTrigger key="mark-tab" value="mark">Mark Attendance</TabsTrigger>
+          <TabsTrigger key="view-tab" value="view">View Records</TabsTrigger>
         </TabsList>
 
         {/* Mark Attendance Tab */}
@@ -616,7 +643,7 @@ const AttendanceManagement = () => {
                             </div>
                           )}
 
-                          {canMarkAttendance() && (
+                          {canMarkStudentAttendance(student) && (
                             <React.Fragment key={`attendance-buttons-${student._id}`}>
                               <Button
                                 key={`present-${student._id}`}
@@ -658,6 +685,18 @@ const AttendanceManagement = () => {
                                 Excused
                               </Button>
                             </React.Fragment>
+                          )}
+
+                          {/* Show saved attendance status when buttons are disabled */}
+                          {!canMarkStudentAttendance(student) && student.savedAttendance && (
+                            <div className="flex items-center space-x-2">
+                              <Badge variant="secondary" className="bg-green-100 text-green-800">
+                                Saved: {student.savedAttendance.status}
+                              </Badge>
+                              {student.savedAttendance.timeIn && (
+                                <span className="text-sm text-gray-500">{student.savedAttendance.timeIn}</span>
+                              )}
+                            </div>
                           )}
 
                           {canViewOnly() && (
