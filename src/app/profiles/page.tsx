@@ -201,14 +201,16 @@ const StudentProfileManagement = () => {
     } else {
       const filtered = courses.filter(course => {
         // Check for 'all' branch courses (should always be included)
-        if (typeof course.branch === 'string' && course.branch === 'all') {
+        if (course.branch && typeof course.branch === 'object' && course.branch._id === 'all') {
           return true;
         }
         // Check for branch-specific courses
-        if (typeof course.branch === 'string') {
-          return course.branch === selectedBranch;
-        } else if (course.branch && typeof course.branch === 'object') {
+        if (course.branch && typeof course.branch === 'object') {
           return course.branch._id === selectedBranch;
+        }
+        // Fallback for string-based branch (legacy support)
+        if (typeof course.branch === 'string') {
+          return course.branch === 'all' || course.branch === selectedBranch;
         }
         return false;
       });
