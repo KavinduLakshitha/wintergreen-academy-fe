@@ -41,7 +41,7 @@ import {
   type DashboardStats,
   type ReportsFilters
 } from '@/services/reportsService';
-import { getBranches } from '@/services/branchService';
+import { getActiveBranches } from '@/services/branchService';
 import { getCourses } from '@/services/courseService';
 
 // Interface for user context
@@ -110,11 +110,11 @@ const ReportsManagement = () => {
 
         // Fetch branches and courses in parallel
         const [branchesData, coursesData] = await Promise.all([
-          getBranches(),
+          getActiveBranches(),
           getCourses()
         ]);
 
-        setBranches(branchesData.branches || []);
+        setBranches(branchesData || []);
         setCourses(coursesData.courses || []);
       } catch (err) {
         console.error('Error fetching initial data:', err);
@@ -372,8 +372,8 @@ const ReportsManagement = () => {
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="all">All Branches</SelectItem>
-                      {branches.map((branch, index) => (
-                        <SelectItem key={branch._id || `branch-${index}`} value={branch._id || `branch-${index}`}>
+                      {branches.filter(branch => branch._id).map((branch, index) => (
+                        <SelectItem key={branch._id} value={branch._id}>
                           {branch.name}
                         </SelectItem>
                       ))}

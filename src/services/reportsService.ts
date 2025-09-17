@@ -142,16 +142,28 @@ const handleResponse = async (response: Response) => {
   return response.json();
 };
 
+/**
+ * Validate ObjectId format
+ */
+const isValidObjectId = (id: string): boolean => {
+  return /^[0-9a-fA-F]{24}$/.test(id);
+};
+
 // Helper function to build query parameters
 const buildQueryParams = (filters: ReportsFilters): string => {
   const queryParams = new URLSearchParams();
-  
+
   Object.entries(filters).forEach(([key, value]) => {
     if (value !== undefined && value !== null && value !== '') {
+      // Validate branchId if it's provided
+      if (key === 'branchId' && value !== 'all' && !isValidObjectId(value.toString())) {
+        console.warn('Invalid branchId format, skipping:', value);
+        return;
+      }
       queryParams.append(key, value.toString());
     }
   });
-  
+
   return queryParams.toString();
 };
 

@@ -69,6 +69,26 @@ export const getBranches = async (filters: {
   }
 };
 
+// Get active branches (simplified for dropdowns)
+export const getActiveBranches = async () => {
+  try {
+    const response = await fetch(`${API_URL}/api/branches/active`, {
+      method: 'GET',
+      headers: getAuthHeaders(),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || 'Failed to fetch active branches');
+    }
+
+    const data = await response.json();
+    return data as Branch[];
+  } catch (error) {
+    handleApiError(error);
+  }
+};
+
 // Get single branch
 export const getBranch = async (branchId: string) => {
   try {
