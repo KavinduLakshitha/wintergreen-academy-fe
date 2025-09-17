@@ -21,7 +21,7 @@ export interface Course {
   branch: {
     _id: string;
     name: string;
-  };
+  } | 'all';
   createdBy: {
     _id: string;
     fullName: string;
@@ -54,7 +54,7 @@ export interface CreateCourseData {
   nextStart: string;
   status?: string;
   modules?: string[];
-  branch: string;
+  branch: string; // Can be ObjectId string or 'all'
 }
 
 export interface UpdateCourseData extends Partial<CreateCourseData> {}

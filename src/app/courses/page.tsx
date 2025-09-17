@@ -186,7 +186,7 @@ const CourseManagement = () => {
       nextStart: course.nextStart.split('T')[0], // Format date for input
       status: course.status,
       modules: course.modules || [],
-      branch: course.branch._id
+      branch: course.branch._id === 'all' ? 'all' : course.branch._id
     });
     setEditingCourse(course);
     setShowFormDialog(true);
@@ -227,7 +227,7 @@ const CourseManagement = () => {
         nextStart: formData.nextStart,
         status: formData.status,
         modules: formData.modules,
-        branch: formData.branch || currentUser?.branch?.id || ''
+        branch: formData.branch === 'all' ? 'all' : (formData.branch || currentUser?.branch?.id || '')
       };
 
       if (editingCourse) {
@@ -409,6 +409,7 @@ const CourseManagement = () => {
                           <SelectValue placeholder="Select branch" />
                         </SelectTrigger>
                         <SelectContent>
+                          <SelectItem value="all">All Branches</SelectItem>
                           {branches.map((branch) => (
                             <SelectItem key={branch.id} value={branch.id}>
                               {branch.name}
@@ -454,7 +455,7 @@ const CourseManagement = () => {
             {/* Courses List */}
             <div className="grid gap-4">
               {courses.map((course) => (
-                <Card key={course.id} className="hover:shadow-md transition-shadow hover:bg-[#2E8B57]/5">
+                <Card key={course._id} className="hover:shadow-md transition-shadow hover:bg-[#2E8B57]/5">
                   <CardContent className="p-6">
                     <div className="flex items-start justify-between">
                       <div className="flex-1">
@@ -492,6 +493,15 @@ const CourseManagement = () => {
                         </div>
                         <div className="text-sm text-gray-600 mt-1">
                           <strong>Schedule:</strong> {course.schedule}
+                        </div>
+                        <div className="text-sm text-gray-600 mt-1">
+                          <strong>Branch:</strong> {
+                            typeof course.branch === 'string' && course.branch === 'all'
+                              ? 'All Branches'
+                              : typeof course.branch === 'object'
+                                ? course.branch.name
+                                : 'Unknown Branch'
+                          }
                         </div>
                       </div>
                       
