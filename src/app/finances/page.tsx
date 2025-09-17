@@ -215,10 +215,21 @@ const FinanceManagement = () => {
   // Transaction handlers
   const handleAddTransaction = async (data: CreateTransactionData) => {
     try {
-      await createTransaction(data);
+      // Add current user's branch to the transaction data
+      const transactionData = {
+        ...data,
+        branch: user?.branch?._id
+      };
+      await createTransaction(transactionData);
       toast.success('Transaction created successfully');
       setIsAddingTransaction(false);
-      await Promise.all([loadTransactions(), loadTransactionStatistics()]);
+      // Refresh both transaction and budget data since expenses affect budgets
+      await Promise.all([
+        loadTransactions(),
+        loadTransactionStatistics(),
+        loadBudgets(),
+        loadBudgetStatistics()
+      ]);
     } catch (error: any) {
       toast.error(error.message || 'Failed to create transaction');
     }
@@ -226,12 +237,18 @@ const FinanceManagement = () => {
 
   const handleUpdateTransaction = async (data: UpdateTransactionData) => {
     if (!editingTransaction) return;
-    
+
     try {
       await updateTransaction(editingTransaction._id, data);
       toast.success('Transaction updated successfully');
       setEditingTransaction(null);
-      await Promise.all([loadTransactions(), loadTransactionStatistics()]);
+      // Refresh both transaction and budget data since expenses affect budgets
+      await Promise.all([
+        loadTransactions(),
+        loadTransactionStatistics(),
+        loadBudgets(),
+        loadBudgetStatistics()
+      ]);
     } catch (error: any) {
       toast.error(error.message || 'Failed to update transaction');
     }
@@ -239,11 +256,17 @@ const FinanceManagement = () => {
 
   const handleDeleteTransaction = async (id: string) => {
     if (!confirm('Are you sure you want to delete this transaction?')) return;
-    
+
     try {
       await deleteTransaction(id);
       toast.success('Transaction deleted successfully');
-      await Promise.all([loadTransactions(), loadTransactionStatistics()]);
+      // Refresh both transaction and budget data since expenses affect budgets
+      await Promise.all([
+        loadTransactions(),
+        loadTransactionStatistics(),
+        loadBudgets(),
+        loadBudgetStatistics()
+      ]);
     } catch (error: any) {
       toast.error(error.message || 'Failed to delete transaction');
     }
@@ -252,7 +275,12 @@ const FinanceManagement = () => {
   // Budget handlers
   const handleAddBudget = async (data: CreateBudgetData) => {
     try {
-      await createBudget(data);
+      // Add current user's branch to the budget data
+      const budgetData = {
+        ...data,
+        branch: user?.branch?._id
+      };
+      await createBudget(budgetData);
       toast.success('Budget created successfully');
       setIsAddingBudget(false);
       await Promise.all([loadBudgets(), loadBudgetStatistics()]);
@@ -664,7 +692,7 @@ const TransactionCard: React.FC<TransactionCardProps> = ({
 interface TransactionFormProps {
   students: Student[];
   transaction?: Transaction;
-  onSubmit: (data: CreateTransactionData | UpdateTransactionData) => void;
+  onSubmit: (data: any) => void;
   onCancel: () => void;
   isEditing?: boolean;
 }
@@ -716,7 +744,7 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
           <Label htmlFor="type">Type</Label>
           <Select
             value={formData.type}
-            onValueChange={(value) => setFormData(prev => ({ ...prev, type: value }))}
+            onValueChange={(value) => setFormData(prev => ({ ...prev, type: value as 'income' | 'expense' }))}
           >
             <SelectTrigger>
               <SelectValue />
@@ -787,7 +815,7 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
           <Label htmlFor="status">Status</Label>
           <Select
             value={formData.status}
-            onValueChange={(value) => setFormData(prev => ({ ...prev, status: value }))}
+            onValueChange={(value) => setFormData(prev => ({ ...prev, status: value as 'pending' | 'completed' | 'cancelled' }))}
           >
             <SelectTrigger>
               <SelectValue />
@@ -874,14 +902,24 @@ const BudgetManagement: React.FC<BudgetManagementProps> = ({
   const [isAddingBudget, setIsAddingBudget] = useState(false);
   const [editingBudget, setEditingBudget] = useState<Budget | null>(null);
 
-  const handleAddBudget = (data: CreateBudgetData) => {
-    onAdd(data);
-    setIsAddingBudget(false);
+  const handleAddBudget = async (data: CreateBudgetData) => {
+    try {
+      await onAdd(data);
+      setIsAddingBudget(false);
+    } catch (error) {
+      // Error is already handled in the parent component
+      // Keep dialog open so user can try again
+    }
   };
 
-  const handleUpdateBudget = (data: UpdateBudgetData) => {
-    onUpdate(data);
-    setEditingBudget(null);
+  const handleUpdateBudget = async (data: UpdateBudgetData) => {
+    try {
+      await onUpdate(data);
+      setEditingBudget(null);
+    } catch (error) {
+      // Error is already handled in the parent component
+      // Keep dialog open so user can try again
+    }
   };
 
   return (
@@ -1148,7 +1186,7 @@ const BudgetCard: React.FC<BudgetCardProps> = ({
 // Budget Form Component
 interface BudgetFormProps {
   budget?: Budget;
-  onSubmit: (data: CreateBudgetData | UpdateBudgetData) => void;
+  onSubmit: (data: any) => void;
   onCancel: () => void;
   isEditing?: boolean;
 }
@@ -1226,7 +1264,7 @@ const BudgetForm: React.FC<BudgetFormProps> = ({
           <Label htmlFor="period">Period</Label>
           <Select
             value={formData.period}
-            onValueChange={(value) => setFormData(prev => ({ ...prev, period: value }))}
+            onValueChange={(value) => setFormData(prev => ({ ...prev, period: value as 'monthly' | 'quarterly' | 'yearly' }))}
           >
             <SelectTrigger>
               <SelectValue />
@@ -1243,7 +1281,7 @@ const BudgetForm: React.FC<BudgetFormProps> = ({
           <Label htmlFor="status">Status</Label>
           <Select
             value={formData.status}
-            onValueChange={(value) => setFormData(prev => ({ ...prev, status: value }))}
+            onValueChange={(value) => setFormData(prev => ({ ...prev, status: value as 'active' | 'inactive' | 'completed' | 'exceeded' }))}
           >
             <SelectTrigger>
               <SelectValue />
