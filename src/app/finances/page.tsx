@@ -1,6 +1,7 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -10,6 +11,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
+import { toast } from 'sonner';
 import { 
   DollarSign, 
   TrendingUp, 
@@ -22,161 +24,279 @@ import {
   Edit,
   Trash2,
   AlertTriangle,
-  Clock} from 'lucide-react';
+  Clock,
+  RefreshCw,
+  Loader2
+} from 'lucide-react';
 
-interface Transaction {
-  id: number;
-  type: 'income' | 'expense';
-  category: string;
-  amount: number;
-  description: string;
-  date: string;
-  status: 'pending' | 'completed' | 'cancelled';
-  studentId?: number;
-  reference?: string;
-}
+// Import services and types
+import {
+  Transaction,
+  Budget,
+  TransactionStatistics,
+  BudgetStatistics,
+  CreateTransactionData,
+  UpdateTransactionData,
+  CreateBudgetData,
+  UpdateBudgetData,
+  getTransactions,
+  getBudgets,
+  getTransactionStatistics,
+  getBudgetStatistics,
+  createTransaction,
+  updateTransaction,
+  deleteTransaction,
+  createBudget,
+  updateBudget,
+  deleteBudget,
+  refreshBudget
+} from '@/services/financeService';
 
-interface Budget {
-  id: number;
-  category: string;
-  allocated: number;
-  spent: number;
-  period: 'monthly' | 'quarterly' | 'yearly';
-}
+import { getStudents, Student } from '@/services/studentService';
 
-interface Student {
-  id: number;
-  name: string;
-  studentId: string;
+interface User {
+  _id: string;
+  fullName: string;
+  username: string;
+  role: 'superAdmin' | 'admin' | 'moderator' | 'staff';
+  branch?: {
+    _id: string;
+    name: string;
+  };
 }
 
 const FinanceManagement = () => {
-  const [transactions, setTransactions] = useState<Transaction[]>([
-    {
-      id: 1,
-      type: 'income',
-      category: 'Tuition Fees',
-      amount: 75000,
-      description: 'Monthly tuition payment - Kasun Perera',
-      date: '2025-06-01',
-      status: 'completed',
-      studentId: 1,
-      reference: 'TF-2025-001'
-    },
-    {
-      id: 2,
-      type: 'income',
-      category: 'Registration Fees',
-      amount: 15000,
-      description: 'New student registration - Nimali Fernando',
-      date: '2025-06-02',
-      status: 'completed',
-      studentId: 2,
-      reference: 'RF-2025-002'
-    },
-    {
-      id: 3,
-      type: 'expense',
-      category: 'Salaries',
-      amount: 250000,
-      description: 'Staff salaries for May 2025',
-      date: '2025-06-01',
-      status: 'completed',
-      reference: 'SAL-2025-05'
-    },
-    {
-      id: 4,
-      type: 'expense',
-      category: 'Utilities',
-      amount: 35000,
-      description: 'Electricity and water bills',
-      date: '2025-06-03',
-      status: 'completed',
-      reference: 'UTL-2025-06'
-    },
-    {
-      id: 5,
-      type: 'income',
-      category: 'Course Fees',
-      amount: 45000,
-      description: 'Advanced Programming Course - Tharushi Jayasinghe',
-      date: '2025-06-05',
-      status: 'pending',
-      studentId: 3,
-      reference: 'CF-2025-003'
-    },
-    {
-      id: 6,
-      type: 'expense',
-      category: 'Equipment',
-      amount: 120000,
-      description: 'New computers for lab',
-      date: '2025-06-04',
-      status: 'pending',
-      reference: 'EQ-2025-001'
-    }
-  ]);
-
-  const [budgets, setBudgets] = useState<Budget[]>([
-    { id: 1, category: 'Salaries', allocated: 3000000, spent: 2500000, period: 'monthly' },
-    { id: 2, category: 'Utilities', allocated: 150000, spent: 105000, period: 'monthly' },
-    { id: 3, category: 'Equipment', allocated: 500000, spent: 320000, period: 'monthly' },
-    { id: 4, category: 'Marketing', allocated: 100000, spent: 45000, period: 'monthly' },
-    { id: 5, category: 'Maintenance', allocated: 75000, spent: 28000, period: 'monthly' }
-  ]);
-
-  const [students] = useState<Student[]>([
-    { id: 1, name: 'Kasun Perera', studentId: 'STU001' },
-    { id: 2, name: 'Nimali Fernando', studentId: 'STU002' },
-    { id: 3, name: 'Tharushi Jayasinghe', studentId: 'STU003' },
-    { id: 4, name: 'Ruwan Silva', studentId: 'STU004' },
-    { id: 5, name: 'Dilani Wickramasinghe', studentId: 'STU005' }
-  ]);
-
+  const router = useRouter();
+  
+  // State management
+  const [user, setUser] = useState<User | null>(null);
+  const [transactions, setTransactions] = useState<Transaction[]>([]);
+  const [budgets, setBudgets] = useState<Budget[]>([]);
+  const [students, setStudents] = useState<Student[]>([]);
+  const [transactionStats, setTransactionStats] = useState<TransactionStatistics | null>(null);
+  const [budgetStats, setBudgetStats] = useState<BudgetStatistics | null>(null);
+  
+  // Loading states
+  const [loading, setLoading] = useState(true);
+  const [transactionsLoading, setTransactionsLoading] = useState(false);
+  const [budgetsLoading, setBudgetsLoading] = useState(false);
+  
+  // Dialog states
   const [isAddingTransaction, setIsAddingTransaction] = useState(false);
+  const [isAddingBudget, setIsAddingBudget] = useState(false);
   const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [filterType, setFilterType] = useState<'all' | 'income' | 'expense'>('all');
-  const [filterStatus, setFilterStatus] = useState<'all' | 'pending' | 'completed' | 'cancelled'>('all');
+  const [editingBudget, setEditingBudget] = useState<Budget | null>(null);
+  
+  // Filter states
+  const [transactionFilters, setTransactionFilters] = useState({
+    search: '',
+    type: '',
+    category: '',
+    status: '',
+    page: 1,
+    limit: 10
+  });
+  
+  const [budgetFilters, setBudgetFilters] = useState({
+    search: '',
+    category: '',
+    period: '',
+    status: '',
+    page: 1,
+    limit: 10
+  });
 
-  // Calculate financial metrics
-  const getFinancialMetrics = () => {
-    const currentMonth = new Date().getMonth();
-    const currentYear = new Date().getFullYear();
-    
-    const monthlyTransactions = transactions.filter(t => {
-      const transactionDate = new Date(t.date);
-      return transactionDate.getMonth() === currentMonth && 
-             transactionDate.getFullYear() === currentYear &&
-             t.status === 'completed';
-    });
+  // Check authentication and get user info
+  useEffect(() => {
+    const token = localStorage.getItem('token');
+    if (!token) {
+      router.push('/auth');
+      return;
+    }
 
-    const totalIncome = monthlyTransactions
-      .filter(t => t.type === 'income')
-      .reduce((sum, t) => sum + t.amount, 0);
+    const userInfo = localStorage.getItem('user');
+    if (userInfo) {
+      const userData = JSON.parse(userInfo);
+      setUser(userData);
+      
+      // Check if user has permission to access finance management
+      if (!['superAdmin', 'admin'].includes(userData.role)) {
+        toast.error('You do not have permission to access finance management');
+        router.push('/dashboard');
+        return;
+      }
+    }
+  }, [router]);
 
-    const totalExpenses = monthlyTransactions
-      .filter(t => t.type === 'expense')
-      .reduce((sum, t) => sum + t.amount, 0);
+  // Load initial data
+  useEffect(() => {
+    if (user) {
+      loadInitialData();
+    }
+  }, [user]);
 
-    const netProfit = totalIncome - totalExpenses;
-
-    const pendingTransactions = transactions.filter(t => t.status === 'pending');
-    const pendingIncome = pendingTransactions
-      .filter(t => t.type === 'income')
-      .reduce((sum, t) => sum + t.amount, 0);
-
-    return {
-      totalIncome,
-      totalExpenses,
-      netProfit,
-      pendingIncome,
-      pendingTransactions: pendingTransactions.length
-    };
+  const loadInitialData = async () => {
+    setLoading(true);
+    try {
+      await Promise.all([
+        loadTransactions(),
+        loadBudgets(),
+        loadStudents(),
+        loadTransactionStatistics(),
+        loadBudgetStatistics()
+      ]);
+    } catch (error) {
+      console.error('Error loading initial data:', error);
+      toast.error('Failed to load finance data');
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const metrics = getFinancialMetrics();
+  const loadTransactions = async () => {
+    setTransactionsLoading(true);
+    try {
+      const result = await getTransactions(transactionFilters);
+      if (result) {
+        setTransactions(result.transactions);
+      }
+    } catch (error) {
+      console.error('Error loading transactions:', error);
+      toast.error('Failed to load transactions');
+    } finally {
+      setTransactionsLoading(false);
+    }
+  };
 
+  const loadBudgets = async () => {
+    setBudgetsLoading(true);
+    try {
+      const result = await getBudgets(budgetFilters);
+      if (result) {
+        setBudgets(result.budgets);
+      }
+    } catch (error) {
+      console.error('Error loading budgets:', error);
+      toast.error('Failed to load budgets');
+    } finally {
+      setBudgetsLoading(false);
+    }
+  };
+
+  const loadStudents = async () => {
+    try {
+      const result = await getStudents({ limit: 1000 }); // Get all students for dropdown
+      if (result) {
+        setStudents(result.students);
+      }
+    } catch (error) {
+      console.error('Error loading students:', error);
+    }
+  };
+
+  const loadTransactionStatistics = async () => {
+    try {
+      const stats = await getTransactionStatistics();
+      setTransactionStats(stats);
+    } catch (error) {
+      console.error('Error loading transaction statistics:', error);
+    }
+  };
+
+  const loadBudgetStatistics = async () => {
+    try {
+      const stats = await getBudgetStatistics();
+      setBudgetStats(stats);
+    } catch (error) {
+      console.error('Error loading budget statistics:', error);
+    }
+  };
+
+  // Transaction handlers
+  const handleAddTransaction = async (data: CreateTransactionData) => {
+    try {
+      await createTransaction(data);
+      toast.success('Transaction created successfully');
+      setIsAddingTransaction(false);
+      await Promise.all([loadTransactions(), loadTransactionStatistics()]);
+    } catch (error: any) {
+      toast.error(error.message || 'Failed to create transaction');
+    }
+  };
+
+  const handleUpdateTransaction = async (data: UpdateTransactionData) => {
+    if (!editingTransaction) return;
+    
+    try {
+      await updateTransaction(editingTransaction._id, data);
+      toast.success('Transaction updated successfully');
+      setEditingTransaction(null);
+      await Promise.all([loadTransactions(), loadTransactionStatistics()]);
+    } catch (error: any) {
+      toast.error(error.message || 'Failed to update transaction');
+    }
+  };
+
+  const handleDeleteTransaction = async (id: string) => {
+    if (!confirm('Are you sure you want to delete this transaction?')) return;
+    
+    try {
+      await deleteTransaction(id);
+      toast.success('Transaction deleted successfully');
+      await Promise.all([loadTransactions(), loadTransactionStatistics()]);
+    } catch (error: any) {
+      toast.error(error.message || 'Failed to delete transaction');
+    }
+  };
+
+  // Budget handlers
+  const handleAddBudget = async (data: CreateBudgetData) => {
+    try {
+      await createBudget(data);
+      toast.success('Budget created successfully');
+      setIsAddingBudget(false);
+      await Promise.all([loadBudgets(), loadBudgetStatistics()]);
+    } catch (error: any) {
+      toast.error(error.message || 'Failed to create budget');
+    }
+  };
+
+  const handleUpdateBudget = async (data: UpdateBudgetData) => {
+    if (!editingBudget) return;
+    
+    try {
+      await updateBudget(editingBudget._id, data);
+      toast.success('Budget updated successfully');
+      setEditingBudget(null);
+      await Promise.all([loadBudgets(), loadBudgetStatistics()]);
+    } catch (error: any) {
+      toast.error(error.message || 'Failed to update budget');
+    }
+  };
+
+  const handleDeleteBudget = async (id: string) => {
+    if (!confirm('Are you sure you want to delete this budget?')) return;
+    
+    try {
+      await deleteBudget(id);
+      toast.success('Budget deleted successfully');
+      await Promise.all([loadBudgets(), loadBudgetStatistics()]);
+    } catch (error: any) {
+      toast.error(error.message || 'Failed to delete budget');
+    }
+  };
+
+  const handleRefreshBudget = async (id: string) => {
+    try {
+      await refreshBudget(id);
+      toast.success('Budget refreshed successfully');
+      await loadBudgets();
+    } catch (error: any) {
+      toast.error(error.message || 'Failed to refresh budget');
+    }
+  };
+
+  // Utility functions
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('en-LK', {
       style: 'currency',
@@ -184,148 +304,137 @@ const FinanceManagement = () => {
     }).format(amount);
   };
 
-  const handleAddTransaction = (transactionData: Omit<Transaction, 'id'>) => {
-    const newTransaction: Transaction = {
-      ...transactionData,
-      id: Math.max(...transactions.map(t => t.id)) + 1
-    };
-    setTransactions([...transactions, newTransaction]);
-    setIsAddingTransaction(false);
-  };
-
-  const handleEditTransaction = (updatedTransaction: Transaction | Omit<Transaction, 'id'>) => {
-    // If 'id' is missing, do nothing (should not happen in edit mode)
-    if (!('id' in updatedTransaction)) return;
-    setTransactions(transactions.map(t => 
-      t.id === updatedTransaction.id ? updatedTransaction as Transaction : t
-    ));
-    setEditingTransaction(null);
-  };
-
-  const handleDeleteTransaction = (id: number) => {
-    setTransactions(transactions.filter(t => t.id !== id));
-  };
-
   const getStatusColor = (status: string) => {
-    switch(status) {
-      case 'completed': return 'bg-[#2E8B57]/20 text-[#2E8B57] border-[#2E8B57]/30';
-      case 'pending': return 'bg-yellow-100 text-yellow-800 border-yellow-200';
-      case 'cancelled': return 'bg-red-100 text-red-800 border-red-200';
-      default: return 'bg-gray-100 text-gray-800 border-gray-200';
+    switch (status) {
+      case 'completed': return 'bg-green-100 text-green-800';
+      case 'pending': return 'bg-yellow-100 text-yellow-800';
+      case 'cancelled': return 'bg-red-100 text-red-800';
+      case 'active': return 'bg-blue-100 text-blue-800';
+      case 'inactive': return 'bg-gray-100 text-gray-800';
+      case 'exceeded': return 'bg-red-100 text-red-800';
+      default: return 'bg-gray-100 text-gray-800';
     }
   };
 
   const getTypeColor = (type: string) => {
-    return type === 'income' ? 'text-[#2E8B57]' : 'text-red-600';
+    return type === 'income' ? 'text-green-600' : 'text-red-600';
   };
 
-  const filteredTransactions = transactions.filter(transaction => {
-    const matchesSearch = transaction.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         transaction.category.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         transaction.reference?.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesType = filterType === 'all' || transaction.type === filterType;
-    const matchesStatus = filterStatus === 'all' || transaction.status === filterStatus;
-    return matchesSearch && matchesType && matchesStatus;
-  });
+  const getBudgetStatusColor = (budgetStatus: string) => {
+    switch (budgetStatus) {
+      case 'good': return 'bg-green-100 text-green-800';
+      case 'moderate': return 'bg-yellow-100 text-yellow-800';
+      case 'warning': return 'bg-orange-100 text-orange-800';
+      case 'exceeded': return 'bg-red-100 text-red-800';
+      default: return 'bg-gray-100 text-gray-800';
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <Loader2 className="w-8 h-8 animate-spin" />
+        <span className="ml-2">Loading finance data...</span>
+      </div>
+    );
+  }
 
   return (
-    <div className="w-full mx-auto p-6 space-y-6">
-      <div className="mx-auto">
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">Finance Management</h1>
-          <p className="text-gray-600">Manage academy finances, budgets, and financial reporting</p>
+    <div className="container mx-auto p-6 space-y-6">
+      <div className="flex justify-between items-center">
+        <div>
+          <h1 className="text-3xl font-bold text-gray-900">Finance Management</h1>
+          <p className="text-gray-600 mt-1">
+            Manage transactions and budgets for {user?.branch?.name || 'all branches'}
+          </p>
         </div>
-
-        {/* Financial Overview Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-gray-600">Monthly Income</p>
-                  <p className="text-2xl font-bold text-[#2E8B57]">{formatCurrency(metrics.totalIncome)}</p>
-                  <p className="text-xs text-gray-500 mt-1">
-                    <TrendingUp className="inline w-3 h-3 mr-1" />
-                    +12% from last month
-                  </p>
-                </div>
-                <div className="bg-[#2E8B57]/20 p-3 rounded-full">
-                  <DollarSign className="w-6 h-6 text-[#2E8B57]" />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-gray-600">Monthly Expenses</p>
-                  <p className="text-2xl font-bold text-red-600">{formatCurrency(metrics.totalExpenses)}</p>
-                  <p className="text-xs text-gray-500 mt-1">
-                    <TrendingDown className="inline w-3 h-3 mr-1" />
-                    -5% from last month
-                  </p>
-                </div>
-                <div className="bg-red-100 p-3 rounded-full">
-                  <CreditCard className="w-6 h-6 text-red-600" />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-gray-600">Net Profit</p>
-                  <p className={`text-2xl font-bold ${metrics.netProfit >= 0 ? 'text-[#2E8B57]' : 'text-red-600'}`}>
-                    {formatCurrency(metrics.netProfit)}
-                  </p>
-                  <p className="text-xs text-gray-500 mt-1">
-                    Current month profit
-                  </p>
-                </div>
-                <div className={`p-3 rounded-full ${metrics.netProfit >= 0 ? 'bg-[#2E8B57]/20' : 'bg-red-100'}`}>
-                  <Wallet className={`w-6 h-6 ${metrics.netProfit >= 0 ? 'text-[#2E8B57]' : 'text-red-600'}`} />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-gray-600">Pending Income</p>
-                  <p className="text-2xl font-bold text-yellow-600">{formatCurrency(metrics.pendingIncome)}</p>
-                  <p className="text-xs text-gray-500 mt-1">
-                    {metrics.pendingTransactions} pending transactions
-                  </p>
-                </div>
-                <div className="bg-yellow-100 p-3 rounded-full">
-                  <Clock className="w-6 h-6 text-yellow-600" />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+        <div className="flex gap-2">
+          <Button variant="outline" onClick={() => window.location.reload()}>
+            <RefreshCw className="w-4 h-4 mr-2" />
+            Refresh
+          </Button>
         </div>
+      </div>
 
-        <Tabs defaultValue="transactions" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-3">
-            <TabsTrigger value="transactions">Transactions</TabsTrigger>
-            <TabsTrigger value="budget">Budget</TabsTrigger>
-            <TabsTrigger value="students">Student Payments</TabsTrigger>
-          </TabsList>
+      {/* Financial Overview Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Total Income</CardTitle>
+            <TrendingUp className="h-4 w-4 text-green-600" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-green-600">
+              {formatCurrency(transactionStats?.totalIncome || 0)}
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Completed transactions
+            </p>
+          </CardContent>
+        </Card>
 
-          <TabsContent value="transactions" className="space-y-6">
-            <Card>
-              <CardHeader>
-                <div className="flex justify-between items-center">
-                  <div>
-                    <CardTitle>Financial Transactions</CardTitle>
-                    <CardDescription>Manage all income and expense transactions</CardDescription>
-                  </div>
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Total Expenses</CardTitle>
+            <TrendingDown className="h-4 w-4 text-red-600" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-red-600">
+              {formatCurrency(transactionStats?.totalExpenses || 0)}
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Completed transactions
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Net Profit</CardTitle>
+            <DollarSign className="h-4 w-4 text-blue-600" />
+          </CardHeader>
+          <CardContent>
+            <div className={`text-2xl font-bold ${(transactionStats?.netProfit || 0) >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+              {formatCurrency(transactionStats?.netProfit || 0)}
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Income - Expenses
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Pending Transactions</CardTitle>
+            <Clock className="h-4 w-4 text-yellow-600" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-yellow-600">
+              {transactionStats?.pendingTransactions || 0}
+            </div>
+            <p className="text-xs text-muted-foreground">
+              {formatCurrency(transactionStats?.pendingIncome || 0)} pending income
+            </p>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Main Content Tabs */}
+      <Tabs defaultValue="transactions" className="space-y-6">
+        <TabsList className="grid w-full grid-cols-2">
+          <TabsTrigger value="transactions">Transactions</TabsTrigger>
+          <TabsTrigger value="budgets">Budgets</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="transactions" className="space-y-6">
+          <Card>
+            <CardHeader>
+              <div className="flex justify-between items-center">
+                <div>
+                  <CardTitle>Financial Transactions</CardTitle>
+                  <CardDescription>Manage all income and expense transactions</CardDescription>
+                </div>
+                {(user?.role === 'superAdmin' || user?.role === 'admin') && (
                   <Dialog open={isAddingTransaction} onOpenChange={setIsAddingTransaction}>
                     <DialogTrigger asChild>
                       <Button className="bg-[#2E8B57] hover:bg-[#236446] text-white">
@@ -347,84 +456,105 @@ const FinanceManagement = () => {
                       />
                     </DialogContent>
                   </Dialog>
-                </div>
+                )}
+              </div>
+            </CardHeader>
 
-                {/* Filters */}
-                <div className="flex flex-col mt-4 md:flex-row gap-4">
-                  <div className="relative flex-1">
-                    <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-                    <Input
-                      placeholder="Search transactions..."
-                      value={searchTerm}
-                      onChange={(e) => setSearchTerm(e.target.value)}
-                      className="pl-10 focus:ring-[#2E8B57] focus:border-[#2E8B57]"
-                    />
+            <CardContent>
+              {/* Transaction Filters */}
+              <div className="flex flex-wrap gap-4 mb-6">
+                <div className="flex-1 min-w-[200px]">
+                  <Input
+                    placeholder="Search transactions..."
+                    value={transactionFilters.search}
+                    onChange={(e) => setTransactionFilters(prev => ({ ...prev, search: e.target.value }))}
+                    className="w-full"
+                  />
+                </div>
+                <Select
+                  value={transactionFilters.type || 'all'}
+                  onValueChange={(value) => setTransactionFilters(prev => ({ ...prev, type: value === 'all' ? '' : value }))}
+                >
+                  <SelectTrigger className="w-[150px]">
+                    <SelectValue placeholder="Type" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Types</SelectItem>
+                    <SelectItem value="income">Income</SelectItem>
+                    <SelectItem value="expense">Expense</SelectItem>
+                  </SelectContent>
+                </Select>
+                <Select
+                  value={transactionFilters.status || 'all'}
+                  onValueChange={(value) => setTransactionFilters(prev => ({ ...prev, status: value === 'all' ? '' : value }))}
+                >
+                  <SelectTrigger className="w-[150px]">
+                    <SelectValue placeholder="Status" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Status</SelectItem>
+                    <SelectItem value="pending">Pending</SelectItem>
+                    <SelectItem value="completed">Completed</SelectItem>
+                    <SelectItem value="cancelled">Cancelled</SelectItem>
+                  </SelectContent>
+                </Select>
+                <Button
+                  onClick={loadTransactions}
+                  disabled={transactionsLoading}
+                >
+                  {transactionsLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Search className="w-4 h-4" />}
+                </Button>
+              </div>
+
+              {/* Transactions List */}
+              <div className="space-y-4">
+                {transactionsLoading ? (
+                  <div className="flex items-center justify-center py-8">
+                    <Loader2 className="w-6 h-6 animate-spin" />
+                    <span className="ml-2">Loading transactions...</span>
                   </div>
-                  <Select value={filterType} onValueChange={(value: 'all' | 'income' | 'expense') => setFilterType(value)}>
-                    <SelectTrigger className="w-40">
-                      <SelectValue placeholder="Type" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">All Types</SelectItem>
-                      <SelectItem value="income">Income</SelectItem>
-                      <SelectItem value="expense">Expense</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  <Select value={filterStatus} onValueChange={(value: 'all' | 'pending' | 'completed' | 'cancelled') => setFilterStatus(value)}>
-                    <SelectTrigger className="w-40">
-                      <SelectValue placeholder="Status" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">All Status</SelectItem>
-                      <SelectItem value="pending">Pending</SelectItem>
-                      <SelectItem value="completed">Completed</SelectItem>
-                      <SelectItem value="cancelled">Cancelled</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  <Button variant="outline" className="border-[#2E8B57] text-[#2E8B57] hover:bg-[#2E8B57]/10">
-                    <Download className="w-4 h-4 mr-2" />
-                    Export
-                  </Button>
-                </div>
-              </CardHeader>
-
-              <CardContent>
-                <div className="space-y-4">
-                  {filteredTransactions.map(transaction => (
+                ) : transactions.length === 0 ? (
+                  <div className="text-center py-8 text-gray-500">
+                    No transactions found
+                  </div>
+                ) : (
+                  transactions.map(transaction => (
                     <TransactionCard
-                      key={transaction.id}
+                      key={transaction._id}
                       transaction={transaction}
-                      students={students}
                       onEdit={setEditingTransaction}
                       onDelete={handleDeleteTransaction}
                       formatCurrency={formatCurrency}
                       getStatusColor={getStatusColor}
                       getTypeColor={getTypeColor}
+                      canEdit={user?.role === 'superAdmin' || user?.role === 'admin'}
                     />
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
+                  ))
+                )}
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
 
-          <TabsContent value="budget" className="space-y-6">
-            <BudgetManagement
-              budgets={budgets}
-              setBudgets={setBudgets}
-              formatCurrency={formatCurrency}
-            />
-          </TabsContent>
+        <TabsContent value="budgets" className="space-y-6">
+          <BudgetManagement
+            budgets={budgets}
+            budgetStats={budgetStats}
+            loading={budgetsLoading}
+            user={user}
+            onAdd={handleAddBudget}
+            onUpdate={handleUpdateBudget}
+            onDelete={handleDeleteBudget}
+            onRefresh={handleRefreshBudget}
+            formatCurrency={formatCurrency}
+            getStatusColor={getStatusColor}
+            getBudgetStatusColor={getBudgetStatusColor}
+          />
+        </TabsContent>
+      </Tabs>
 
-          <TabsContent value="students" className="space-y-6">
-            <StudentPayments
-              students={students}
-              transactions={transactions}
-              formatCurrency={formatCurrency}
-            />
-          </TabsContent>
-        </Tabs>
-
-        {/* Edit Transaction Dialog */}
+      {/* Edit Transaction Dialog */}
+      {editingTransaction && (
         <Dialog open={!!editingTransaction} onOpenChange={() => setEditingTransaction(null)}>
           <DialogContent className="max-w-2xl">
             <DialogHeader>
@@ -433,18 +563,16 @@ const FinanceManagement = () => {
                 Update transaction details below.
               </DialogDescription>
             </DialogHeader>
-            {editingTransaction && (
-              <TransactionForm
-                transaction={editingTransaction}
-                students={students}
-                onSubmit={handleEditTransaction}
-                onCancel={() => setEditingTransaction(null)}
-                isEditing
-              />
-            )}
+            <TransactionForm
+              students={students}
+              transaction={editingTransaction}
+              onSubmit={handleUpdateTransaction}
+              onCancel={() => setEditingTransaction(null)}
+              isEditing
+            />
           </DialogContent>
         </Dialog>
-      </div>
+      )}
     </div>
   );
 };
@@ -452,72 +580,80 @@ const FinanceManagement = () => {
 // Transaction Card Component
 interface TransactionCardProps {
   transaction: Transaction;
-  students: Student[];
   onEdit: (transaction: Transaction) => void;
-  onDelete: (id: number) => void;
+  onDelete: (id: string) => void;
   formatCurrency: (amount: number) => string;
   getStatusColor: (status: string) => string;
   getTypeColor: (type: string) => string;
+  canEdit: boolean;
 }
 
 const TransactionCard: React.FC<TransactionCardProps> = ({
   transaction,
-  students,
   onEdit,
   onDelete,
   formatCurrency,
   getStatusColor,
-  getTypeColor
+  getTypeColor,
+  canEdit
 }) => {
-  const student = transaction.studentId ? students.find(s => s.id === transaction.studentId) : null;
-
   return (
-    <div className="flex items-center justify-between p-4 border rounded-lg hover:bg-[#2E8B57]/5 transition-colors">
-      <div className="flex items-center space-x-4">
-        <div className={`p-2 rounded-full ${transaction.type === 'income' ? 'bg-[#2E8B57]/20' : 'bg-red-100'}`}>
-          {transaction.type === 'income' ? 
-            <TrendingUp className="w-5 h-5 text-[#2E8B57]" /> : 
-            <TrendingDown className="w-5 h-5 text-red-600" />
-          }
-        </div>
-        <div>
-          <p className="font-medium">{transaction.description}</p>
-          <div className="flex items-center space-x-2 text-sm text-gray-500">
-            <span>{transaction.category}</span>
-            <span>•</span>
-            <span>{new Date(transaction.date).toLocaleDateString()}</span>
+    <div className="border rounded-lg p-4 hover:shadow-md transition-shadow">
+      <div className="flex justify-between items-start">
+        <div className="flex-1">
+          <div className="flex items-center gap-2 mb-2">
+            <Badge className={getStatusColor(transaction.status)}>
+              {transaction.status}
+            </Badge>
+            <span className={`font-semibold ${getTypeColor(transaction.type)}`}>
+              {transaction.type.toUpperCase()}
+            </span>
             {transaction.reference && (
-              <>
-                <span>•</span>
-                <span>{transaction.reference}</span>
-              </>
-            )}
-            {student && (
-              <>
-                <span>•</span>
-                <span>{student.name}</span>
-              </>
+              <span className="text-sm text-gray-500">#{transaction.reference}</span>
             )}
           </div>
+
+          <h3 className="font-semibold text-lg">{transaction.category}</h3>
+          <p className="text-gray-600 mb-2">{transaction.description}</p>
+
+          <div className="flex flex-wrap gap-4 text-sm text-gray-500">
+            <span>Date: {new Date(transaction.date).toLocaleDateString()}</span>
+            {transaction.student && (
+              <span>Student: {transaction.student.fullName}</span>
+            )}
+            {transaction.course && (
+              <span>Course: {transaction.course.title}</span>
+            )}
+            <span>Branch: {transaction.branch.name}</span>
+          </div>
         </div>
-      </div>
-      
-      <div className="flex items-center space-x-4">
-        <div className="text-right">
-          <p className={`font-bold text-lg ${getTypeColor(transaction.type)}`}>
-            {transaction.type === 'income' ? '+' : '-'}{formatCurrency(transaction.amount)}
-          </p>
-          <Badge className={`${getStatusColor(transaction.status)} border`}>
-            {transaction.status}
-          </Badge>
-        </div>
-        <div className="flex space-x-2">
-          <Button size="sm" variant="outline" onClick={() => onEdit(transaction)} className="border-[#2E8B57] text-[#2E8B57] hover:bg-[#2E8B57]/10">
-            <Edit className="w-4 h-4" />
-          </Button>
-          <Button size="sm" variant="outline" onClick={() => onDelete(transaction.id)}>
-            <Trash2 className="w-4 h-4" />
-          </Button>
+
+        <div className="flex items-center gap-2">
+          <div className="text-right">
+            <div className={`text-xl font-bold ${getTypeColor(transaction.type)}`}>
+              {transaction.type === 'expense' ? '-' : '+'}{formatCurrency(transaction.amount)}
+            </div>
+          </div>
+
+          {canEdit && (
+            <div className="flex gap-1">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => onEdit(transaction)}
+              >
+                <Edit className="w-4 h-4" />
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => onDelete(transaction._id)}
+                className="text-red-600 hover:text-red-700"
+              >
+                <Trash2 className="w-4 h-4" />
+              </Button>
+            </div>
+          )}
         </div>
       </div>
     </div>
@@ -526,29 +662,30 @@ const TransactionCard: React.FC<TransactionCardProps> = ({
 
 // Transaction Form Component
 interface TransactionFormProps {
-  transaction?: Transaction;
   students: Student[];
-  onSubmit: (transaction: Transaction | Omit<Transaction, 'id'>) => void;
+  transaction?: Transaction;
+  onSubmit: (data: CreateTransactionData | UpdateTransactionData) => void;
   onCancel: () => void;
   isEditing?: boolean;
 }
 
 const TransactionForm: React.FC<TransactionFormProps> = ({
-  transaction,
   students,
+  transaction,
   onSubmit,
   onCancel,
   isEditing = false
 }) => {
   const [formData, setFormData] = useState({
-    type: transaction?.type || 'income' as 'income' | 'expense',
+    type: transaction?.type || 'income',
     category: transaction?.category || '',
     amount: transaction?.amount?.toString() || '',
     description: transaction?.description || '',
-    date: transaction?.date || new Date().toISOString().split('T')[0],
-    status: transaction?.status || 'pending' as 'pending' | 'completed' | 'cancelled',
-    studentId: transaction?.studentId?.toString() || '',
-    reference: transaction?.reference || ''
+    date: transaction?.date ? new Date(transaction.date).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
+    status: transaction?.status || 'pending',
+    reference: transaction?.reference || '',
+    student: transaction?.student?._id || '',
+    course: transaction?.course?._id || ''
   });
 
   const incomeCategories = ['Tuition Fees', 'Registration Fees', 'Course Fees', 'Late Fees', 'Other Income'];
@@ -556,27 +693,31 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+
     const submissionData = {
-      ...formData,
+      type: formData.type as 'income' | 'expense',
+      category: formData.category,
       amount: parseFloat(formData.amount),
-      studentId: formData.studentId ? parseInt(formData.studentId) : undefined
+      description: formData.description,
+      date: formData.date,
+      status: formData.status as 'pending' | 'completed' | 'cancelled',
+      reference: formData.reference || undefined,
+      student: formData.student || undefined,
+      course: formData.course || undefined
     };
 
-    if (isEditing && transaction) {
-      onSubmit({ ...submissionData, id: transaction.id });
-    } else {
-      onSubmit(submissionData);
-    }
+    onSubmit(submissionData);
   };
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div className="grid grid-cols-2 gap-4">
         <div>
-          <Label htmlFor="type">Transaction Type</Label>
-          <Select value={formData.type} onValueChange={(value: 'income' | 'expense') => {
-            setFormData({...formData, type: value, category: ''});
-          }}>
+          <Label htmlFor="type">Type</Label>
+          <Select
+            value={formData.type}
+            onValueChange={(value) => setFormData(prev => ({ ...prev, type: value }))}
+          >
             <SelectTrigger>
               <SelectValue />
             </SelectTrigger>
@@ -589,29 +730,32 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
 
         <div>
           <Label htmlFor="category">Category</Label>
-          <Select value={formData.category} onValueChange={(value) => setFormData({...formData, category: value})}>
+          <Select
+            value={formData.category}
+            onValueChange={(value) => setFormData(prev => ({ ...prev, category: value }))}
+          >
             <SelectTrigger>
               <SelectValue placeholder="Select category" />
             </SelectTrigger>
             <SelectContent>
               {(formData.type === 'income' ? incomeCategories : expenseCategories).map(category => (
-                <SelectItem key={category} value={category}>
-                  {category}
-                </SelectItem>
+                <SelectItem key={category} value={category}>{category}</SelectItem>
               ))}
             </SelectContent>
           </Select>
         </div>
+      </div>
 
+      <div className="grid grid-cols-2 gap-4">
         <div>
           <Label htmlFor="amount">Amount (LKR)</Label>
           <Input
             id="amount"
             type="number"
             step="0.01"
+            min="0"
             value={formData.amount}
-            onChange={(e) => setFormData({...formData, amount: e.target.value})}
-            className="focus:ring-[#2E8B57] focus:border-[#2E8B57]"
+            onChange={(e) => setFormData(prev => ({ ...prev, amount: e.target.value }))}
             required
           />
         </div>
@@ -622,15 +766,29 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
             id="date"
             type="date"
             value={formData.date}
-            onChange={(e) => setFormData({...formData, date: e.target.value})}
-            className="focus:ring-[#2E8B57] focus:border-[#2E8B57]"
+            onChange={(e) => setFormData(prev => ({ ...prev, date: e.target.value }))}
             required
           />
         </div>
+      </div>
 
+      <div>
+        <Label htmlFor="description">Description</Label>
+        <Textarea
+          id="description"
+          value={formData.description}
+          onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
+          required
+        />
+      </div>
+
+      <div className="grid grid-cols-2 gap-4">
         <div>
           <Label htmlFor="status">Status</Label>
-          <Select value={formData.status} onValueChange={(value: 'pending' | 'completed' | 'cancelled') => setFormData({...formData, status: value})}>
+          <Select
+            value={formData.status}
+            onValueChange={(value) => setFormData(prev => ({ ...prev, status: value }))}
+          >
             <SelectTrigger>
               <SelectValue />
             </SelectTrigger>
@@ -643,54 +801,42 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
         </div>
 
         <div>
-          <Label htmlFor="reference">Reference Number</Label>
+          <Label htmlFor="reference">Reference (Optional)</Label>
           <Input
             id="reference"
             value={formData.reference}
-            onChange={(e) => setFormData({...formData, reference: e.target.value})}
-            className="focus:ring-[#2E8B57] focus:border-[#2E8B57]"
-            placeholder="e.g., TF-2025-001"
+            onChange={(e) => setFormData(prev => ({ ...prev, reference: e.target.value }))}
+            placeholder="Auto-generated if empty"
           />
         </div>
       </div>
 
-      {formData.type === 'income' && (
-        <div>
-          <Label htmlFor="studentId">Student (Optional)</Label>
-          <Select value={formData.studentId} onValueChange={(value) => setFormData({...formData, studentId: value})}>
-            <SelectTrigger>
-              <SelectValue placeholder="Select student" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="">No student selected</SelectItem>
-              {students.map(student => (
-                <SelectItem key={student.id} value={student.id.toString()}>
-                  {student.name} ({student.studentId})
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-      )}
-
       <div>
-        <Label htmlFor="description">Description</Label>
-        <Textarea
-          id="description"
-          value={formData.description}
-          onChange={(e) => setFormData({...formData, description: e.target.value})}
-          className="focus:ring-[#2E8B57] focus:border-[#2E8B57]"
-          rows={3}
-          required
-        />
+        <Label htmlFor="student">Student (Optional)</Label>
+        <Select
+          value={formData.student || 'none'}
+          onValueChange={(value) => setFormData(prev => ({ ...prev, student: value === 'none' ? '' : value }))}
+        >
+          <SelectTrigger>
+            <SelectValue placeholder="Select student" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="none">No student</SelectItem>
+            {students.map(student => (
+              <SelectItem key={student._id} value={student._id}>
+                {student.fullName} ({student.studentId})
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
       </div>
 
-      <div className="flex justify-end space-x-2 pt-4">
+      <div className="flex justify-end gap-2">
         <Button type="button" variant="outline" onClick={onCancel}>
           Cancel
         </Button>
-        <Button type="submit" className="bg-[#2E8B57] hover:bg-[#236446] text-white">
-          {isEditing ? 'Update Transaction' : 'Add Transaction'}
+        <Button type="submit" className="bg-[#2E8B57] hover:bg-[#236446]">
+          {isEditing ? 'Update' : 'Create'} Transaction
         </Button>
       </div>
     </form>
@@ -700,154 +846,460 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
 // Budget Management Component
 interface BudgetManagementProps {
   budgets: Budget[];
-  setBudgets: React.Dispatch<React.SetStateAction<Budget[]>>;
+  budgetStats: BudgetStatistics | null;
+  loading: boolean;
+  user: User | null;
+  onAdd: (data: CreateBudgetData) => void;
+  onUpdate: (data: UpdateBudgetData) => void;
+  onDelete: (id: string) => void;
+  onRefresh: (id: string) => void;
   formatCurrency: (amount: number) => string;
+  getStatusColor: (status: string) => string;
+  getBudgetStatusColor: (status: string) => string;
 }
 
-const BudgetManagement: React.FC<BudgetManagementProps> = ({ budgets, formatCurrency }) => {
-  const getBudgetStatus = (budget: Budget) => {
-    const percentage = (budget.spent / budget.allocated) * 100;
-    if (percentage >= 90) return { status: 'danger', color: 'bg-red-500' };
-    if (percentage >= 75) return { status: 'warning', color: 'bg-yellow-500' };
-    return { status: 'safe', color: 'bg-[#2E8B57]' };
+const BudgetManagement: React.FC<BudgetManagementProps> = ({
+  budgets,
+  budgetStats,
+  loading,
+  user,
+  onAdd,
+  onUpdate,
+  onDelete,
+  onRefresh,
+  formatCurrency,
+  getStatusColor,
+  getBudgetStatusColor
+}) => {
+  const [isAddingBudget, setIsAddingBudget] = useState(false);
+  const [editingBudget, setEditingBudget] = useState<Budget | null>(null);
+
+  const handleAddBudget = (data: CreateBudgetData) => {
+    onAdd(data);
+    setIsAddingBudget(false);
+  };
+
+  const handleUpdateBudget = (data: UpdateBudgetData) => {
+    onUpdate(data);
+    setEditingBudget(null);
   };
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Budget Overview</CardTitle>
-        <CardDescription>Monitor budget allocation and spending across categories</CardDescription>
-      </CardHeader>
-      <CardContent>
-        <div className="space-y-6">
-          {budgets.map(budget => {
-            const percentage = (budget.spent / budget.allocated) * 100;
-            const { status, color } = getBudgetStatus(budget);
-            const remaining = budget.allocated - budget.spent;
+    <div className="space-y-6">
+      {/* Budget Statistics */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Total Allocated</CardTitle>
+            <Wallet className="h-4 w-4 text-blue-600" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-blue-600">
+              {formatCurrency(budgetStats?.totalAllocated || 0)}
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Across all budgets
+            </p>
+          </CardContent>
+        </Card>
 
-            return (
-              <div key={budget.id} className="p-4 border rounded-lg">
-                <div className="flex justify-between items-start mb-3">
-                  <div>
-                    <h3 className="font-medium">{budget.category}</h3>
-                    <p className="text-sm text-gray-500 capitalize">{budget.period} budget</p>
-                  </div>
-                  <div className="text-right">
-                    <p className="text-sm text-gray-500">
-                      {formatCurrency(budget.spent)} / {formatCurrency(budget.allocated)}
-                    </p>
-                    <p className={`text-sm font-medium ${remaining >= 0 ? 'text-[#2E8B57]' : 'text-red-600'}`}>
-                      {remaining >= 0 ? 'Remaining: ' : 'Over budget: '}{formatCurrency(Math.abs(remaining))}
-                    </p>
-                  </div>
-                </div>
-                
-                <div className="w-full bg-gray-200 rounded-full h-2">
-                  <div
-                    className={`h-2 rounded-full ${color}`}
-                    style={{ width: `${Math.min(percentage, 100)}%` }}
-                  ></div>
-                </div>
-                
-                <div className="flex justify-between items-center mt-2">
-                  <span className="text-sm text-gray-500">{percentage.toFixed(1)}% used</span>
-                  {status === 'danger' && (
-                    <Badge className="bg-red-100 text-red-800 border-red-200">
-                      <AlertTriangle className="w-3 h-3 mr-1" />
-                      Over Budget
-                    </Badge>
-                  )}
-                  {status === 'warning' && (
-                    <Badge className="bg-yellow-100 text-yellow-800 border-yellow-200">
-                      <AlertTriangle className="w-3 h-3 mr-1" />
-                      Near Limit
-                    </Badge>
-                  )}
-                </div>
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Total Spent</CardTitle>
+            <CreditCard className="h-4 w-4 text-red-600" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-red-600">
+              {formatCurrency(budgetStats?.totalSpent || 0)}
+            </div>
+            <p className="text-xs text-muted-foreground">
+              {budgetStats?.overallUtilization || 0}% utilization
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Remaining</CardTitle>
+            <DollarSign className="h-4 w-4 text-green-600" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-green-600">
+              {formatCurrency(budgetStats?.totalRemaining || 0)}
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Available to spend
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Exceeded Budgets</CardTitle>
+            <AlertTriangle className="h-4 w-4 text-red-600" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-red-600">
+              {budgetStats?.exceededBudgets || 0}
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Out of {budgetStats?.totalBudgets || 0} total
+            </p>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Budget Management */}
+      <Card>
+        <CardHeader>
+          <div className="flex justify-between items-center">
+            <div>
+              <CardTitle>Budget Management</CardTitle>
+              <CardDescription>Manage budget allocations and track spending</CardDescription>
+            </div>
+            {user?.role === 'superAdmin' && (
+              <Dialog open={isAddingBudget} onOpenChange={setIsAddingBudget}>
+                <DialogTrigger asChild>
+                  <Button className="bg-[#2E8B57] hover:bg-[#236446] text-white">
+                    <Plus className="w-4 h-4 mr-2" />
+                    Add Budget
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="max-w-2xl">
+                  <DialogHeader>
+                    <DialogTitle>Add New Budget</DialogTitle>
+                    <DialogDescription>
+                      Create a new budget allocation.
+                    </DialogDescription>
+                  </DialogHeader>
+                  <BudgetForm
+                    onSubmit={handleAddBudget}
+                    onCancel={() => setIsAddingBudget(false)}
+                  />
+                </DialogContent>
+              </Dialog>
+            )}
+          </div>
+        </CardHeader>
+
+        <CardContent>
+          <div className="space-y-4">
+            {loading ? (
+              <div className="flex items-center justify-center py-8">
+                <Loader2 className="w-6 h-6 animate-spin" />
+                <span className="ml-2">Loading budgets...</span>
               </div>
-            );
-          })}
-        </div>
-      </CardContent>
-    </Card>
+            ) : budgets.length === 0 ? (
+              <div className="text-center py-8 text-gray-500">
+                No budgets found
+              </div>
+            ) : (
+              budgets.map(budget => (
+                <BudgetCard
+                  key={budget._id}
+                  budget={budget}
+                  onEdit={setEditingBudget}
+                  onDelete={onDelete}
+                  onRefresh={onRefresh}
+                  formatCurrency={formatCurrency}
+                  getStatusColor={getStatusColor}
+                  getBudgetStatusColor={getBudgetStatusColor}
+                  canEdit={user?.role === 'superAdmin'}
+                />
+              ))
+            )}
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Edit Budget Dialog */}
+      {editingBudget && (
+        <Dialog open={!!editingBudget} onOpenChange={() => setEditingBudget(null)}>
+          <DialogContent className="max-w-2xl">
+            <DialogHeader>
+              <DialogTitle>Edit Budget</DialogTitle>
+              <DialogDescription>
+                Update budget details below.
+              </DialogDescription>
+            </DialogHeader>
+            <BudgetForm
+              budget={editingBudget}
+              onSubmit={handleUpdateBudget}
+              onCancel={() => setEditingBudget(null)}
+              isEditing
+            />
+          </DialogContent>
+        </Dialog>
+      )}
+    </div>
   );
 };
 
-// Student Payments Component
-interface StudentPaymentsProps {
-  students: Student[];
-  transactions: Transaction[];
+// Budget Card Component
+interface BudgetCardProps {
+  budget: Budget;
+  onEdit: (budget: Budget) => void;
+  onDelete: (id: string) => void;
+  onRefresh: (id: string) => void;
   formatCurrency: (amount: number) => string;
+  getStatusColor: (status: string) => string;
+  getBudgetStatusColor: (status: string) => string;
+  canEdit: boolean;
 }
 
-const StudentPayments: React.FC<StudentPaymentsProps> = ({ students, transactions, formatCurrency }) => {
-  const getStudentPaymentSummary = () => {
-    return students.map(student => {
-      const studentTransactions = transactions.filter(t => 
-        t.studentId === student.id && t.type === 'income'
-      );
-      
-      const totalPaid = studentTransactions
-        .filter(t => t.status === 'completed')
-        .reduce((sum, t) => sum + t.amount, 0);
-      
-      const pendingAmount = studentTransactions
-        .filter(t => t.status === 'pending')
-        .reduce((sum, t) => sum + t.amount, 0);
-      
-      const lastPayment = studentTransactions
-        .filter(t => t.status === 'completed')
-        .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())[0];
-
-      return {
-        student,
-        totalPaid,
-        pendingAmount,
-        lastPayment: lastPayment ? new Date(lastPayment.date).toLocaleDateString() : 'No payments',
-        transactionCount: studentTransactions.length
-      };
-    });
-  };
-
-  const paymentSummary = getStudentPaymentSummary();
+const BudgetCard: React.FC<BudgetCardProps> = ({
+  budget,
+  onEdit,
+  onDelete,
+  onRefresh,
+  formatCurrency,
+  getStatusColor,
+  getBudgetStatusColor,
+  canEdit
+}) => {
+  const utilizationPercentage = budget.utilizationPercentage || 0;
+  const remaining = budget.remaining || 0;
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Student Payment Summary</CardTitle>
-        <CardDescription>Overview of payments by student</CardDescription>
-      </CardHeader>
-      <CardContent>
-        <div className="space-y-4">
-          {paymentSummary.map(summary => (
-            <div key={summary.student.id} className="flex items-center justify-between p-4 border rounded-lg hover:bg-[#2E8B57]/5 transition-colors">
-              <div>
-                <p className="font-medium">{summary.student.name}</p>
-                <p className="text-sm text-gray-500">{summary.student.studentId}</p>
-              </div>
-              <div className="flex space-x-6 text-sm">
-                <div>
-                  <p className="text-gray-500">Total Paid</p>
-                  <p className="font-medium text-[#2E8B57]">{formatCurrency(summary.totalPaid)}</p>
-                </div>
-                <div>
-                  <p className="text-gray-500">Pending</p>
-                  <p className="font-medium text-yellow-600">{formatCurrency(summary.pendingAmount)}</p>
-                </div>
-                <div>
-                  <p className="text-gray-500">Last Payment</p>
-                  <p className="font-medium">{summary.lastPayment}</p>
-                </div>
-                <div>
-                  <p className="text-gray-500">Transactions</p>
-                  <p className="font-medium">{summary.transactionCount}</p>
-                </div>
-              </div>
-            </div>
-          ))}
+    <div className="border rounded-lg p-4 hover:shadow-md transition-shadow">
+      <div className="flex justify-between items-start mb-4">
+        <div className="flex-1">
+          <div className="flex items-center gap-2 mb-2">
+            <Badge className={getStatusColor(budget.status)}>
+              {budget.status}
+            </Badge>
+            <Badge className={getBudgetStatusColor(budget.budgetStatus || 'good')}>
+              {budget.budgetStatus || 'good'}
+            </Badge>
+            <span className="text-sm text-gray-500 capitalize">{budget.period}</span>
+          </div>
+
+          <h3 className="font-semibold text-lg">{budget.category}</h3>
+          {budget.description && (
+            <p className="text-gray-600 mb-2">{budget.description}</p>
+          )}
+
+          <div className="flex flex-wrap gap-4 text-sm text-gray-500">
+            <span>Period: {new Date(budget.startDate).toLocaleDateString()} - {new Date(budget.endDate).toLocaleDateString()}</span>
+            <span>Branch: {budget.branch.name}</span>
+          </div>
         </div>
-      </CardContent>
-    </Card>
+
+        {canEdit && (
+          <div className="flex gap-1">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => onRefresh(budget._id)}
+              title="Refresh spent amount"
+            >
+              <RefreshCw className="w-4 h-4" />
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => onEdit(budget)}
+            >
+              <Edit className="w-4 h-4" />
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => onDelete(budget._id)}
+              className="text-red-600 hover:text-red-700"
+            >
+              <Trash2 className="w-4 h-4" />
+            </Button>
+          </div>
+        )}
+      </div>
+
+      {/* Budget Progress */}
+      <div className="space-y-2">
+        <div className="flex justify-between text-sm">
+          <span>Allocated: {formatCurrency(budget.allocated)}</span>
+          <span>Spent: {formatCurrency(budget.spent)}</span>
+        </div>
+
+        <div className="w-full bg-gray-200 rounded-full h-2">
+          <div
+            className={`h-2 rounded-full transition-all ${
+              utilizationPercentage >= 100 ? 'bg-red-500' :
+              utilizationPercentage >= 80 ? 'bg-orange-500' :
+              utilizationPercentage >= 50 ? 'bg-yellow-500' : 'bg-green-500'
+            }`}
+            style={{ width: `${Math.min(utilizationPercentage, 100)}%` }}
+          />
+        </div>
+
+        <div className="flex justify-between text-sm">
+          <span className={utilizationPercentage >= 100 ? 'text-red-600' : 'text-green-600'}>
+            Remaining: {formatCurrency(remaining)}
+          </span>
+          <span className="font-medium">
+            {utilizationPercentage.toFixed(1)}% used
+          </span>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// Budget Form Component
+interface BudgetFormProps {
+  budget?: Budget;
+  onSubmit: (data: CreateBudgetData | UpdateBudgetData) => void;
+  onCancel: () => void;
+  isEditing?: boolean;
+}
+
+const BudgetForm: React.FC<BudgetFormProps> = ({
+  budget,
+  onSubmit,
+  onCancel,
+  isEditing = false
+}) => {
+  const [formData, setFormData] = useState({
+    category: budget?.category || '',
+    allocated: budget?.allocated?.toString() || '',
+    period: budget?.period || 'monthly',
+    startDate: budget?.startDate ? new Date(budget.startDate).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
+    endDate: budget?.endDate ? new Date(budget.endDate).toISOString().split('T')[0] : '',
+    description: budget?.description || '',
+    status: budget?.status || 'active'
+  });
+
+  const categories = ['Salaries', 'Utilities', 'Equipment', 'Marketing', 'Maintenance', 'Rent', 'Supplies', 'Training', 'Other'];
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+
+    const submissionData = {
+      category: formData.category,
+      allocated: parseFloat(formData.allocated),
+      period: formData.period as 'monthly' | 'quarterly' | 'yearly',
+      startDate: formData.startDate,
+      endDate: formData.endDate,
+      description: formData.description || undefined,
+      status: formData.status as 'active' | 'inactive' | 'completed' | 'exceeded'
+    };
+
+    onSubmit(submissionData);
+  };
+
+  return (
+    <form onSubmit={handleSubmit} className="space-y-4">
+      <div className="grid grid-cols-2 gap-4">
+        <div>
+          <Label htmlFor="category">Category</Label>
+          <Select
+            value={formData.category}
+            onValueChange={(value) => setFormData(prev => ({ ...prev, category: value }))}
+          >
+            <SelectTrigger>
+              <SelectValue placeholder="Select category" />
+            </SelectTrigger>
+            <SelectContent>
+              {categories.map(category => (
+                <SelectItem key={category} value={category}>{category}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+
+        <div>
+          <Label htmlFor="allocated">Allocated Amount (LKR)</Label>
+          <Input
+            id="allocated"
+            type="number"
+            step="0.01"
+            min="0"
+            value={formData.allocated}
+            onChange={(e) => setFormData(prev => ({ ...prev, allocated: e.target.value }))}
+            required
+          />
+        </div>
+      </div>
+
+      <div className="grid grid-cols-2 gap-4">
+        <div>
+          <Label htmlFor="period">Period</Label>
+          <Select
+            value={formData.period}
+            onValueChange={(value) => setFormData(prev => ({ ...prev, period: value }))}
+          >
+            <SelectTrigger>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="monthly">Monthly</SelectItem>
+              <SelectItem value="quarterly">Quarterly</SelectItem>
+              <SelectItem value="yearly">Yearly</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+
+        <div>
+          <Label htmlFor="status">Status</Label>
+          <Select
+            value={formData.status}
+            onValueChange={(value) => setFormData(prev => ({ ...prev, status: value }))}
+          >
+            <SelectTrigger>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="active">Active</SelectItem>
+              <SelectItem value="inactive">Inactive</SelectItem>
+              <SelectItem value="completed">Completed</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-2 gap-4">
+        <div>
+          <Label htmlFor="startDate">Start Date</Label>
+          <Input
+            id="startDate"
+            type="date"
+            value={formData.startDate}
+            onChange={(e) => setFormData(prev => ({ ...prev, startDate: e.target.value }))}
+            required
+          />
+        </div>
+
+        <div>
+          <Label htmlFor="endDate">End Date</Label>
+          <Input
+            id="endDate"
+            type="date"
+            value={formData.endDate}
+            onChange={(e) => setFormData(prev => ({ ...prev, endDate: e.target.value }))}
+            required
+          />
+        </div>
+      </div>
+
+      <div>
+        <Label htmlFor="description">Description (Optional)</Label>
+        <Textarea
+          id="description"
+          value={formData.description}
+          onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
+          placeholder="Budget description..."
+        />
+      </div>
+
+      <div className="flex justify-end gap-2">
+        <Button type="button" variant="outline" onClick={onCancel}>
+          Cancel
+        </Button>
+        <Button type="submit" className="bg-[#2E8B57] hover:bg-[#236446]">
+          {isEditing ? 'Update' : 'Create'} Budget
+        </Button>
+      </div>
+    </form>
   );
 };
 
