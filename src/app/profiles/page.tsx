@@ -26,6 +26,18 @@ import {
 } from '@/services/studentService';
 import { getCourses } from '@/services/courseService';
 
+// Utility function for status colors
+const getStatusColor = (status: string) => {
+  switch(status) {
+    case 'Active': return 'bg-[#2E8B57]/20 text-[#2E8B57] border-[#2E8B57]/30';
+    case 'Inactive': return 'bg-red-100 text-red-800 border-red-200';
+    case 'Suspended': return 'bg-yellow-100 text-yellow-800 border-yellow-200';
+    case 'Graduated': return 'bg-blue-100 text-blue-800 border-blue-200';
+    case 'Dropped': return 'bg-gray-100 text-gray-800 border-gray-200';
+    default: return 'bg-gray-100 text-gray-800 border-gray-200';
+  }
+};
+
 interface Branch {
   _id: string;
   name: string;
@@ -34,7 +46,7 @@ interface Branch {
 interface Course {
   _id: string;
   title: string;
-  branch: string | { _id: string; name: string };
+  branch: 'all' | { _id: string; name: string } | null;
   modules: string[];
 }
 
@@ -179,9 +191,10 @@ const StudentProfileManagement = () => {
       const filtered = courses.filter(course => {
         if (typeof course.branch === 'string') {
           return course.branch === 'all' || course.branch === selectedBranch;
-        } else {
+        } else if (course.branch && typeof course.branch === 'object') {
           return course.branch._id === selectedBranch;
         }
+        return false;
       });
       setFilteredCourses(filtered);
     }
@@ -262,19 +275,6 @@ const StudentProfileManagement = () => {
   const canAddEdit = currentUser?.role === 'superAdmin' ||
                      currentUser?.role === 'admin' ||
                      currentUser?.role === 'moderator';
-
-
-
-  const getStatusColor = (status: string) => {
-    switch(status) {
-      case 'Active': return 'bg-[#2E8B57]/20 text-[#2E8B57] border-[#2E8B57]/30';
-      case 'Inactive': return 'bg-red-100 text-red-800 border-red-200';
-      case 'Suspended': return 'bg-yellow-100 text-yellow-800 border-yellow-200';
-      case 'Graduated': return 'bg-blue-100 text-blue-800 border-blue-200';
-      case 'Dropped': return 'bg-gray-100 text-gray-800 border-gray-200';
-      default: return 'bg-gray-100 text-gray-800 border-gray-200';
-    }
-  };
 
   if (loading) {
     return (
@@ -515,7 +515,8 @@ const StudentProfileManagement = () => {
             onSubmit={handleAddStudent}
             onCancel={() => setIsAddDialogOpen(false)}
             branches={branches}
-            courses={filteredCourses}
+            courses={courses}
+            filteredCourses={filteredCourses}
             selectedBranch={selectedBranch}
             setSelectedBranch={setSelectedBranch}
             currentUser={currentUser}
@@ -538,7 +539,8 @@ const StudentProfileManagement = () => {
               onSubmit={handleEditStudent}
               onCancel={() => setIsEditDialogOpen(false)}
               branches={branches}
-              courses={filteredCourses}
+              courses={courses}
+              filteredCourses={filteredCourses}
               selectedBranch={selectedBranch}
               setSelectedBranch={setSelectedBranch}
               currentUser={currentUser}
@@ -710,6 +712,7 @@ interface StudentFormProps {
   onCancel: () => void;
   branches: Branch[];
   courses: Course[];
+  filteredCourses: Course[];
   selectedBranch: string;
   setSelectedBranch: (branch: string) => void;
   currentUser: CurrentUser | null;
@@ -722,6 +725,7 @@ const StudentForm: React.FC<StudentFormProps> = ({
   onCancel,
   branches,
   courses,
+  filteredCourses,
   selectedBranch,
   setSelectedBranch,
   currentUser,
@@ -741,6 +745,13 @@ const StudentForm: React.FC<StudentFormProps> = ({
     level: student?.level || 'Beginner',
     certifications: student?.certifications.join(', ') || ''
   });
+
+  // Clear course selection when branch changes for SuperAdmin
+  useEffect(() => {
+    if (currentUser?.role === 'superAdmin' && !isEditing) {
+      setFormData(prev => ({ ...prev, course: '' }));
+    }
+  }, [selectedBranch, currentUser?.role, isEditing]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -814,23 +825,29 @@ const StudentForm: React.FC<StudentFormProps> = ({
 
         <div>
           <Label htmlFor="course">Course</Label>
-          <Select value={formData.course} onValueChange={(value) => setFormData({ ...formData, course: value })}>
+          <Select
+            value={formData.course}
+            onValueChange={(value) => setFormData({ ...formData, course: value })}
+            disabled={currentUser?.role === 'superAdmin' && (!selectedBranch || selectedBranch === 'all')}
+          >
             <SelectTrigger>
-              <SelectValue placeholder="Select course" />
+              <SelectValue placeholder={currentUser?.role === 'superAdmin' && (!selectedBranch || selectedBranch === 'all') ? "Select branch first" : "Select course"} />
             </SelectTrigger>
             <SelectContent>
-              {courses.filter(course => course._id && course.title).map((course) => (
-                <SelectItem key={course._id} value={course._id}>
-                  {course.title}
-                </SelectItem>
-              ))}
+              {(currentUser?.role === 'superAdmin' ? filteredCourses : courses)
+                .filter((course: Course) => course._id && course.title)
+                .map((course: Course) => (
+                  <SelectItem key={course._id} value={course._id}>
+                    {course.title}
+                  </SelectItem>
+                ))}
             </SelectContent>
           </Select>
         </div>
 
         <div>
           <Label htmlFor="level">Level</Label>
-          <Select value={formData.level} onValueChange={(value) => setFormData({ ...formData, level: value })}>
+          <Select value={formData.level} onValueChange={(value) => setFormData({ ...formData, level: value as 'Beginner' | 'Intermediate' | 'Advanced' })}>
             <SelectTrigger>
               <SelectValue />
             </SelectTrigger>
@@ -859,7 +876,7 @@ const StudentForm: React.FC<StudentFormProps> = ({
 
         <div>
           <Label htmlFor="status">Status</Label>
-          <Select value={formData.status} onValueChange={(value) => setFormData({ ...formData, status: value })}>
+          <Select value={formData.status} onValueChange={(value) => setFormData({ ...formData, status: value as 'Active' | 'Inactive' | 'Suspended' | 'Graduated' | 'Dropped' })}>
             <SelectTrigger>
               <SelectValue />
             </SelectTrigger>
