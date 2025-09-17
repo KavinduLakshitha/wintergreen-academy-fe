@@ -41,7 +41,6 @@ import {
   type AttendanceStats
 } from '@/services/attendanceService';
 import { getCourses, type Course } from '@/services/courseService';
-import { getBranches, type Branch } from '@/services/branchService';
 
 interface User {
   id: string;
@@ -59,7 +58,7 @@ const AttendanceManagement = () => {
   // State management
   const [user, setUser] = useState<User | null>(null);
   const [courses, setCourses] = useState<Course[]>([]);
-  const [branches, setBranches] = useState<Branch[]>([]);
+
   const [students, setStudents] = useState<StudentWithAttendance[]>([]);
   const [attendanceRecords, setAttendanceRecords] = useState<AttendanceRecord[]>([]);
   const [attendanceStats, setAttendanceStats] = useState<AttendanceStats | null>(null);
@@ -67,7 +66,6 @@ const AttendanceManagement = () => {
   // Filter states
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [selectedCourse, setSelectedCourse] = useState("");
-  const [selectedBranch, setSelectedBranch] = useState("all");
   const [searchTerm, setSearchTerm] = useState("");
   const [activeTab, setActiveTab] = useState("mark");
   
@@ -102,10 +100,7 @@ const AttendanceManagement = () => {
       setUser(userData);
 
       // Load initial data
-      await Promise.all([
-        loadCourses(userData),
-        loadBranches(userData)
-      ]);
+      await loadCourses(userData);
       
     } catch (error) {
       console.error('Error initializing component:', error);
@@ -115,17 +110,10 @@ const AttendanceManagement = () => {
     }
   };
 
-  const loadCourses = async (userData: User, branchFilter?: string) => {
+  const loadCourses = async (userData: User) => {
     try {
-      let branchId: string | undefined;
-
-      if (userData.role === 'superAdmin') {
-        // For SuperAdmin, use branch filter if provided and not 'all'
-        branchId = branchFilter && branchFilter !== 'all' ? branchFilter : undefined;
-      } else {
-        // For other roles, use their branch
-        branchId = userData.branch?.id;
-      }
+      // For all roles, use their currently logged branch
+      const branchId = userData.branch?.id;
 
       const result = await getCourses({
         limit: 100,
@@ -147,33 +135,28 @@ const AttendanceManagement = () => {
     }
   };
 
-  const loadBranches = async (userData: User) => {
-    try {
-      if (userData.role === 'superAdmin') {
-        const result = await getBranches({ limit: 100 });
-        if (result?.branches) {
-          setBranches(result.branches);
-        }
-      }
-    } catch (error) {
-      console.error('Error loading branches:', error);
-      setError('Failed to load branches');
-    }
-  };
 
-  // Reload courses when branch selection changes (for SuperAdmin)
+
+  // Load courses when user changes
   useEffect(() => {
-    if (user && user.role === 'superAdmin') {
-      loadCourses(user, selectedBranch);
+    if (user) {
+      loadCourses(user);
     }
-  }, [selectedBranch, user]);
+  }, [user]);
 
-  // Load students when course, date, or branch changes
+  // Load students when course or date changes
   useEffect(() => {
     if (selectedCourse && user) {
       loadStudents();
     }
-  }, [selectedCourse, selectedDate, selectedBranch, user]);
+  }, [selectedCourse, selectedDate, user]);
+
+  // Load attendance stats when course or date changes
+  useEffect(() => {
+    if (selectedCourse && user) {
+      loadAttendanceStats();
+    }
+  }, [selectedCourse, selectedDate, user]);
 
   const loadStudents = async () => {
     if (!selectedCourse) return;
@@ -183,7 +166,7 @@ const AttendanceManagement = () => {
       setError(null);
 
       const dateStr = selectedDate.toISOString().split('T')[0];
-      const branchId = user?.role === 'superAdmin' ? selectedBranch : undefined;
+      const branchId = user?.branch?.id;
       const result = await getCourseStudents(selectedCourse, dateStr, branchId);
 
       if (result) {
@@ -204,7 +187,7 @@ const AttendanceManagement = () => {
 
     try {
       const dateStr = selectedDate.toISOString().split('T')[0];
-      const branchId = user.role === 'superAdmin' ? (selectedBranch === 'all' ? undefined : selectedBranch) : user.branch?.id;
+      const branchId = user.branch?.id;
 
       const result = await getAttendanceStats(selectedCourse, dateStr, branchId);
       if (result) {
@@ -322,7 +305,7 @@ const AttendanceManagement = () => {
 
       const filters = {
         courseId: selectedCourse,
-        branchId: user.role === 'superAdmin' ? (selectedBranch === 'all' ? undefined : selectedBranch) : user.branch?.id,
+        branchId: user.branch?.id,
         dateFrom: selectedDate.toISOString().split('T')[0],
         dateTo: selectedDate.toISOString().split('T')[0]
       };
@@ -376,11 +359,11 @@ const AttendanceManagement = () => {
     if (!canMarkAttendance()) return false;
 
     // If student has saved attendance (not just marked locally), disable buttons
-    return !student.savedAttendance;
+    return !student.attendance;
   };
 
   const canEditAttendance = () => {
-    return user?.role && ['superAdmin', 'admin'].includes(user.role);
+    return Boolean(user?.role && ['superAdmin', 'admin'].includes(user.role));
   };
 
   const canViewOnly = () => {
@@ -455,23 +438,13 @@ const AttendanceManagement = () => {
               />
             </div>
 
-            {/* Branch Filter (SuperAdmin only) */}
-            {user.role === 'superAdmin' && (
+            {/* Current Branch Display */}
+            {user.branch && (
               <div className="space-y-2">
-                <Label>Branch</Label>
-                <Select value={selectedBranch} onValueChange={setSelectedBranch}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select branch" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem key="all-branches" value="all">All Branches</SelectItem>
-                    {branches.map((branch, index) => (
-                      <SelectItem key={`branch-${branch._id}-${index}`} value={branch._id}>
-                        {branch.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <Label>Current Branch</Label>
+                <div className="px-3 py-2 bg-gray-50 border rounded-md text-sm">
+                  {user.branch.name}
+                </div>
               </div>
             )}
 
@@ -688,13 +661,13 @@ const AttendanceManagement = () => {
                           )}
 
                           {/* Show saved attendance status when buttons are disabled */}
-                          {!canMarkStudentAttendance(student) && student.savedAttendance && (
+                          {!canMarkStudentAttendance(student) && student.attendance && (
                             <div className="flex items-center space-x-2">
                               <Badge variant="secondary" className="bg-green-100 text-green-800">
-                                Saved: {student.savedAttendance.status}
+                                Saved: {student.attendance.status}
                               </Badge>
-                              {student.savedAttendance.timeIn && (
-                                <span className="text-sm text-gray-500">{student.savedAttendance.timeIn}</span>
+                              {student.attendance.timeIn && (
+                                <span className="text-sm text-gray-500">{student.attendance.timeIn}</span>
                               )}
                             </div>
                           )}
@@ -720,10 +693,8 @@ const AttendanceManagement = () => {
           <AttendanceRecordsView
             user={user}
             selectedCourse={selectedCourse}
-            selectedBranch={selectedBranch}
             selectedDate={selectedDate}
             courses={courses}
-            branches={branches}
             canEdit={canEditAttendance()}
             onRecordUpdate={loadAttendanceStats}
           />
@@ -737,10 +708,8 @@ const AttendanceManagement = () => {
 interface AttendanceRecordsViewProps {
   user: User;
   selectedCourse: string;
-  selectedBranch: string;
   selectedDate: Date;
   courses: Course[];
-  branches: Branch[];
   canEdit: boolean;
   onRecordUpdate: () => void;
 }
@@ -748,10 +717,8 @@ interface AttendanceRecordsViewProps {
 const AttendanceRecordsView: React.FC<AttendanceRecordsViewProps> = ({
   user,
   selectedCourse,
-  selectedBranch,
   selectedDate,
   courses,
-  branches,
   canEdit,
   onRecordUpdate
 }) => {
@@ -766,7 +733,7 @@ const AttendanceRecordsView: React.FC<AttendanceRecordsViewProps> = ({
     if (selectedCourse) {
       loadRecords();
     }
-  }, [selectedCourse, selectedBranch, selectedDate]);
+  }, [selectedCourse, selectedDate]);
 
   const loadRecords = async () => {
     try {
@@ -775,7 +742,7 @@ const AttendanceRecordsView: React.FC<AttendanceRecordsViewProps> = ({
 
       const filters = {
         courseId: selectedCourse,
-        branchId: user.role === 'superAdmin' ? (selectedBranch === 'all' ? undefined : selectedBranch) : user.branch?.id,
+        branchId: user.branch?.id,
         date: selectedDate.toISOString().split('T')[0],
         limit: 100
       };
@@ -985,7 +952,7 @@ const EditAttendanceForm: React.FC<EditAttendanceFormProps> = ({
       <div className="grid grid-cols-2 gap-4">
         <div>
           <Label className="text-sm font-medium">Status</Label>
-          <Select value={status} onValueChange={setStatus}>
+          <Select value={status} onValueChange={(value) => setStatus(value as 'Present' | 'Absent' | 'Late' | 'Excused')}>
             <SelectTrigger>
               <SelectValue />
             </SelectTrigger>

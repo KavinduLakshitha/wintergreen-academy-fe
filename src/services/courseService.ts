@@ -109,11 +109,20 @@ export const getCourses = async (params?: {
   if (params?.status) queryParams.append('status', params.status);
   if (params?.branchId) queryParams.append('branchId', params.branchId);
 
-  const response = await fetch(`${API_URL}/api/courses?${queryParams}`, {
-    headers: getAuthHeaders(),
-  });
+  try {
+    const response = await fetch(`${API_URL}/api/courses?${queryParams}`, {
+      headers: getAuthHeaders(),
+    });
 
-  return handleResponse(response);
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    return handleResponse(response);
+  } catch (error) {
+    console.error('Error fetching courses:', error);
+    throw error;
+  }
 };
 
 /**
