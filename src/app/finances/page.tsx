@@ -96,7 +96,7 @@ const FinanceManagement = () => {
     page: 1,
     limit: 10
   });
-  
+
   const [budgetFilters, setBudgetFilters] = useState({
     search: '',
     category: '',
@@ -105,6 +105,43 @@ const FinanceManagement = () => {
     page: 1,
     limit: 10
   });
+
+  // Category options based on transaction type
+  const incomeCategories = [
+    'Tuition Fees',
+    'Registration Fees',
+    'Examination Fees',
+    'Certificate Fees',
+    'Late Payment Fees',
+    'Material Fees',
+    'Lab Fees',
+    'Other Income'
+  ];
+
+  const expenseCategories = [
+    'Office Supplies',
+    'Equipment',
+    'Utilities',
+    'Rent',
+    'Salaries',
+    'Marketing',
+    'Training Materials',
+    'Maintenance',
+    'Insurance',
+    'Transportation',
+    'Communication',
+    'Other Expenses'
+  ];
+
+  // Get categories based on selected transaction type
+  const getAvailableCategories = () => {
+    if (transactionFilters.type === 'income') {
+      return incomeCategories;
+    } else if (transactionFilters.type === 'expense') {
+      return expenseCategories;
+    }
+    return [...incomeCategories, ...expenseCategories];
+  };
 
   // Check authentication and get user info
   useEffect(() => {
@@ -134,6 +171,38 @@ const FinanceManagement = () => {
       loadInitialData();
     }
   }, [user]);
+
+  // Auto-reload transactions when filters change
+  useEffect(() => {
+    if (user) {
+      const timeoutId = setTimeout(() => {
+        loadTransactions();
+      }, 300); // Debounce search input
+
+      return () => clearTimeout(timeoutId);
+    }
+  }, [transactionFilters, user]);
+
+  // Auto-reload budgets when filters change
+  useEffect(() => {
+    if (user) {
+      const timeoutId = setTimeout(() => {
+        loadBudgets();
+      }, 300); // Debounce search input
+
+      return () => clearTimeout(timeoutId);
+    }
+  }, [budgetFilters, user]);
+
+  // Reset category filter when transaction type changes
+  useEffect(() => {
+    if (transactionFilters.category) {
+      const availableCategories = getAvailableCategories();
+      if (!availableCategories.includes(transactionFilters.category)) {
+        setTransactionFilters(prev => ({ ...prev, category: '' }));
+      }
+    }
+  }, [transactionFilters.type]);
 
   const loadInitialData = async () => {
     setLoading(true);
@@ -481,6 +550,8 @@ const FinanceManagement = () => {
                         students={students}
                         onSubmit={handleAddTransaction}
                         onCancel={() => setIsAddingTransaction(false)}
+                        incomeCategories={incomeCategories}
+                        expenseCategories={expenseCategories}
                       />
                     </DialogContent>
                   </Dialog>
@@ -513,6 +584,22 @@ const FinanceManagement = () => {
                   </SelectContent>
                 </Select>
                 <Select
+                  value={transactionFilters.category || 'all'}
+                  onValueChange={(value) => setTransactionFilters(prev => ({ ...prev, category: value === 'all' ? '' : value }))}
+                >
+                  <SelectTrigger className="w-[180px]">
+                    <SelectValue placeholder="Category" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Categories</SelectItem>
+                    {getAvailableCategories().map(category => (
+                      <SelectItem key={category} value={category}>
+                        {category}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <Select
                   value={transactionFilters.status || 'all'}
                   onValueChange={(value) => setTransactionFilters(prev => ({ ...prev, status: value === 'all' ? '' : value }))}
                 >
@@ -526,12 +613,7 @@ const FinanceManagement = () => {
                     <SelectItem value="cancelled">Cancelled</SelectItem>
                   </SelectContent>
                 </Select>
-                <Button
-                  onClick={loadTransactions}
-                  disabled={transactionsLoading}
-                >
-                  {transactionsLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Search className="w-4 h-4" />}
-                </Button>
+
               </div>
 
               {/* Transactions List */}
@@ -577,6 +659,11 @@ const FinanceManagement = () => {
             formatCurrency={formatCurrency}
             getStatusColor={getStatusColor}
             getBudgetStatusColor={getBudgetStatusColor}
+            budgetFilters={budgetFilters}
+            setBudgetFilters={setBudgetFilters}
+            loadBudgets={loadBudgets}
+            incomeCategories={incomeCategories}
+            expenseCategories={expenseCategories}
           />
         </TabsContent>
       </Tabs>
@@ -597,6 +684,8 @@ const FinanceManagement = () => {
               onSubmit={handleUpdateTransaction}
               onCancel={() => setEditingTransaction(null)}
               isEditing
+              incomeCategories={incomeCategories}
+              expenseCategories={expenseCategories}
             />
           </DialogContent>
         </Dialog>
@@ -695,6 +784,8 @@ interface TransactionFormProps {
   onSubmit: (data: any) => void;
   onCancel: () => void;
   isEditing?: boolean;
+  incomeCategories: string[];
+  expenseCategories: string[];
 }
 
 const TransactionForm: React.FC<TransactionFormProps> = ({
@@ -702,7 +793,9 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
   transaction,
   onSubmit,
   onCancel,
-  isEditing = false
+  isEditing = false,
+  incomeCategories,
+  expenseCategories
 }) => {
   const [formData, setFormData] = useState({
     type: transaction?.type || 'income',
@@ -716,8 +809,7 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
     course: transaction?.course?._id || ''
   });
 
-  const incomeCategories = ['Tuition Fees', 'Registration Fees', 'Course Fees', 'Late Fees', 'Other Income'];
-  const expenseCategories = ['Salaries', 'Utilities', 'Equipment', 'Marketing', 'Maintenance', 'Rent', 'Supplies', 'Other Expenses'];
+  // Categories are now passed as props
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -884,6 +976,11 @@ interface BudgetManagementProps {
   formatCurrency: (amount: number) => string;
   getStatusColor: (status: string) => string;
   getBudgetStatusColor: (status: string) => string;
+  budgetFilters: any;
+  setBudgetFilters: any;
+  loadBudgets: () => void;
+  incomeCategories: string[];
+  expenseCategories: string[];
 }
 
 const BudgetManagement: React.FC<BudgetManagementProps> = ({
@@ -897,7 +994,12 @@ const BudgetManagement: React.FC<BudgetManagementProps> = ({
   onRefresh,
   formatCurrency,
   getStatusColor,
-  getBudgetStatusColor
+  getBudgetStatusColor,
+  budgetFilters,
+  setBudgetFilters,
+  loadBudgets,
+  incomeCategories,
+  expenseCategories
 }) => {
   const [isAddingBudget, setIsAddingBudget] = useState(false);
   const [editingBudget, setEditingBudget] = useState<Budget | null>(null);
@@ -1013,6 +1115,7 @@ const BudgetManagement: React.FC<BudgetManagementProps> = ({
                   <BudgetForm
                     onSubmit={handleAddBudget}
                     onCancel={() => setIsAddingBudget(false)}
+                    categories={expenseCategories}
                   />
                 </DialogContent>
               </Dialog>
@@ -1021,6 +1124,64 @@ const BudgetManagement: React.FC<BudgetManagementProps> = ({
         </CardHeader>
 
         <CardContent>
+          {/* Budget Filters */}
+          <div className="flex flex-wrap gap-4 mb-6">
+            <div className="flex-1 min-w-[200px]">
+              <Input
+                placeholder="Search budgets..."
+                value={budgetFilters.search}
+                onChange={(e) => setBudgetFilters(prev => ({ ...prev, search: e.target.value }))}
+                className="w-full"
+              />
+            </div>
+            <Select
+              value={budgetFilters.category || 'all'}
+              onValueChange={(value) => setBudgetFilters(prev => ({ ...prev, category: value === 'all' ? '' : value }))}
+            >
+              <SelectTrigger className="w-[180px]">
+                <SelectValue placeholder="Category" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Categories</SelectItem>
+                {[...incomeCategories, ...expenseCategories].map(category => (
+                  <SelectItem key={category} value={category}>
+                    {category}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <Select
+              value={budgetFilters.period || 'all'}
+              onValueChange={(value) => setBudgetFilters(prev => ({ ...prev, period: value === 'all' ? '' : value }))}
+            >
+              <SelectTrigger className="w-[150px]">
+                <SelectValue placeholder="Period" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Periods</SelectItem>
+                <SelectItem value="monthly">Monthly</SelectItem>
+                <SelectItem value="quarterly">Quarterly</SelectItem>
+                <SelectItem value="yearly">Yearly</SelectItem>
+              </SelectContent>
+            </Select>
+            <Select
+              value={budgetFilters.status || 'all'}
+              onValueChange={(value) => setBudgetFilters(prev => ({ ...prev, status: value === 'all' ? '' : value }))}
+            >
+              <SelectTrigger className="w-[150px]">
+                <SelectValue placeholder="Status" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Status</SelectItem>
+                <SelectItem value="active">Active</SelectItem>
+                <SelectItem value="completed">Completed</SelectItem>
+                <SelectItem value="inactive">Inactive</SelectItem>
+                <SelectItem value="exceeded">Exceeded</SelectItem>
+              </SelectContent>
+            </Select>
+
+          </div>
+
           <div className="space-y-4">
             {loading ? (
               <div className="flex items-center justify-center py-8">
@@ -1065,6 +1226,7 @@ const BudgetManagement: React.FC<BudgetManagementProps> = ({
               onSubmit={handleUpdateBudget}
               onCancel={() => setEditingBudget(null)}
               isEditing
+              categories={expenseCategories}
             />
           </DialogContent>
         </Dialog>
@@ -1189,13 +1351,15 @@ interface BudgetFormProps {
   onSubmit: (data: any) => void;
   onCancel: () => void;
   isEditing?: boolean;
+  categories: string[];
 }
 
 const BudgetForm: React.FC<BudgetFormProps> = ({
   budget,
   onSubmit,
   onCancel,
-  isEditing = false
+  isEditing = false,
+  categories
 }) => {
   const [formData, setFormData] = useState({
     category: budget?.category || '',
@@ -1207,7 +1371,7 @@ const BudgetForm: React.FC<BudgetFormProps> = ({
     status: budget?.status || 'active'
   });
 
-  const categories = ['Salaries', 'Utilities', 'Equipment', 'Marketing', 'Maintenance', 'Rent', 'Supplies', 'Training', 'Other'];
+  // Categories are now passed as props
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
