@@ -138,11 +138,14 @@ export const getAttendanceRecords = async (filters: AttendanceFilters = {}) => {
 };
 
 // Get students enrolled in a course for attendance marking
-export const getCourseStudents = async (courseId: string, date?: string) => {
+export const getCourseStudents = async (courseId: string, date?: string, branchId?: string) => {
   try {
     const queryParams = new URLSearchParams();
     if (date) {
       queryParams.append('date', date);
+    }
+    if (branchId) {
+      queryParams.append('branchId', branchId);
     }
 
     const response = await fetch(`${API_URL}/api/attendance/students/${courseId}?${queryParams}`, {

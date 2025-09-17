@@ -149,23 +149,24 @@ const AttendanceManagement = () => {
     }
   };
 
-  // Load students when course or date changes
+  // Load students when course, date, or branch changes
   useEffect(() => {
     if (selectedCourse && user) {
       loadStudents();
     }
-  }, [selectedCourse, selectedDate, user]);
+  }, [selectedCourse, selectedDate, selectedBranch, user]);
 
   const loadStudents = async () => {
     if (!selectedCourse) return;
-    
+
     try {
       setStudentsLoading(true);
       setError(null);
-      
+
       const dateStr = selectedDate.toISOString().split('T')[0];
-      const result = await getCourseStudents(selectedCourse, dateStr);
-      
+      const branchId = user?.role === 'superAdmin' ? selectedBranch : undefined;
+      const result = await getCourseStudents(selectedCourse, dateStr, branchId);
+
       if (result) {
         setStudents(result.students);
         // Load attendance stats
@@ -496,27 +497,27 @@ const AttendanceManagement = () => {
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-2 md:grid-cols-6 gap-4">
-              <div className="text-center">
+              <div key="total-enrolled" className="text-center">
                 <div className="text-2xl font-bold text-blue-600">{attendanceStats.totalEnrolled}</div>
                 <div className="text-sm text-muted-foreground">Total Enrolled</div>
               </div>
-              <div className="text-center">
+              <div key="present" className="text-center">
                 <div className="text-2xl font-bold text-green-600">{attendanceStats.Present}</div>
                 <div className="text-sm text-muted-foreground">Present</div>
               </div>
-              <div className="text-center">
+              <div key="absent" className="text-center">
                 <div className="text-2xl font-bold text-red-600">{attendanceStats.Absent}</div>
                 <div className="text-sm text-muted-foreground">Absent</div>
               </div>
-              <div className="text-center">
+              <div key="late" className="text-center">
                 <div className="text-2xl font-bold text-yellow-600">{attendanceStats.Late}</div>
                 <div className="text-sm text-muted-foreground">Late</div>
               </div>
-              <div className="text-center">
+              <div key="excused" className="text-center">
                 <div className="text-2xl font-bold text-blue-600">{attendanceStats.Excused}</div>
                 <div className="text-sm text-muted-foreground">Excused</div>
               </div>
-              <div className="text-center">
+              <div key="not-marked" className="text-center">
                 <div className="text-2xl font-bold text-gray-600">{attendanceStats.notMarked}</div>
                 <div className="text-sm text-muted-foreground">Not Marked</div>
               </div>
@@ -865,30 +866,38 @@ const AttendanceRecordsView: React.FC<AttendanceRecordsViewProps> = ({
 
                 {expandedRecords.has(record._id) && (
                   <div className="px-4 pb-4 border-t bg-gray-50">
-                    <div className="grid grid-cols-2 gap-4 mt-4">
-                      <div>
-                        <Label className="text-sm font-medium">Branch</Label>
-                        <p className="text-sm">{record.branch.name}</p>
-                      </div>
-                      <div>
-                        <Label className="text-sm font-medium">Date</Label>
-                        <p className="text-sm">{record.formattedDate}</p>
-                      </div>
-                      <div>
-                        <Label className="text-sm font-medium">Marked By</Label>
-                        <p className="text-sm">{record.markedBy.fullName}</p>
-                      </div>
-                      <div>
-                        <Label className="text-sm font-medium">Time In</Label>
-                        <p className="text-sm">{record.formattedTime}</p>
-                      </div>
-                      {record.notes && (
-                        <div className="col-span-2">
-                          <Label className="text-sm font-medium">Notes</Label>
-                          <p className="text-sm">{record.notes}</p>
+                    {editingRecord === record._id ? (
+                      <EditAttendanceForm
+                        record={record}
+                        onSave={handleUpdateRecord}
+                        onCancel={() => setEditingRecord(null)}
+                      />
+                    ) : (
+                      <div className="grid grid-cols-2 gap-4 mt-4">
+                        <div>
+                          <Label className="text-sm font-medium">Branch</Label>
+                          <p className="text-sm">{record.branch.name}</p>
                         </div>
-                      )}
-                    </div>
+                        <div>
+                          <Label className="text-sm font-medium">Date</Label>
+                          <p className="text-sm">{record.formattedDate}</p>
+                        </div>
+                        <div>
+                          <Label className="text-sm font-medium">Marked By</Label>
+                          <p className="text-sm">{record.markedBy.fullName}</p>
+                        </div>
+                        <div>
+                          <Label className="text-sm font-medium">Time In</Label>
+                          <p className="text-sm">{record.formattedTime}</p>
+                        </div>
+                        {record.notes && (
+                          <div className="col-span-2">
+                            <Label className="text-sm font-medium">Notes</Label>
+                            <p className="text-sm">{record.notes}</p>
+                          </div>
+                        )}
+                      </div>
+                    )}
                   </div>
                 )}
               </div>
@@ -897,6 +906,95 @@ const AttendanceRecordsView: React.FC<AttendanceRecordsViewProps> = ({
         )}
       </CardContent>
     </Card>
+  );
+};
+
+// Edit Attendance Form Component
+interface EditAttendanceFormProps {
+  record: AttendanceRecord;
+  onSave: (recordId: string, updateData: any) => void;
+  onCancel: () => void;
+}
+
+const EditAttendanceForm: React.FC<EditAttendanceFormProps> = ({
+  record,
+  onSave,
+  onCancel
+}) => {
+  const [status, setStatus] = useState(record.status);
+  const [timeIn, setTimeIn] = useState(record.timeIn || '');
+  const [notes, setNotes] = useState(record.notes || '');
+  const [saving, setSaving] = useState(false);
+
+  const handleSave = async () => {
+    try {
+      setSaving(true);
+      await onSave(record._id, {
+        status,
+        timeIn: status === 'Present' || status === 'Late' ? timeIn : null,
+        notes: notes.trim() || null
+      });
+    } catch (error) {
+      console.error('Error saving attendance:', error);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <div className="space-y-4 mt-4">
+      <div className="grid grid-cols-2 gap-4">
+        <div>
+          <Label className="text-sm font-medium">Status</Label>
+          <Select value={status} onValueChange={setStatus}>
+            <SelectTrigger>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="Present">Present</SelectItem>
+              <SelectItem value="Late">Late</SelectItem>
+              <SelectItem value="Absent">Absent</SelectItem>
+              <SelectItem value="Excused">Excused</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+        {(status === 'Present' || status === 'Late') && (
+          <div>
+            <Label className="text-sm font-medium">Time In</Label>
+            <Input
+              type="time"
+              value={timeIn}
+              onChange={(e) => setTimeIn(e.target.value)}
+            />
+          </div>
+        )}
+      </div>
+      <div>
+        <Label className="text-sm font-medium">Notes (Optional)</Label>
+        <Input
+          value={notes}
+          onChange={(e) => setNotes(e.target.value)}
+          placeholder="Add any notes..."
+        />
+      </div>
+      <div className="flex space-x-2">
+        <Button
+          size="sm"
+          onClick={handleSave}
+          disabled={saving}
+        >
+          {saving ? 'Saving...' : 'Save Changes'}
+        </Button>
+        <Button
+          size="sm"
+          variant="outline"
+          onClick={onCancel}
+          disabled={saving}
+        >
+          Cancel
+        </Button>
+      </div>
+    </div>
   );
 };
 
