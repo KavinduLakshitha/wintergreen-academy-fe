@@ -243,8 +243,25 @@ const StudentProfileManagement = () => {
   const handleAddStudent = async (formData: Record<string, unknown>) => {
     try {
       const studentData = formatStudentForSubmission(formData);
-      if (selectedBranch && selectedBranch !== 'all' && currentUser?.role !== 'superAdmin') {
-        studentData.branch = selectedBranch;
+
+      // Ensure branch is set correctly
+      if (!studentData.branch) {
+        if (currentUser?.role === 'superAdmin') {
+          if (selectedBranch && selectedBranch !== 'all') {
+            studentData.branch = selectedBranch;
+          } else {
+            toast.error('Please select a branch for the student');
+            return;
+          }
+        } else {
+          // For non-SuperAdmin users, use their assigned branch
+          if (currentUser?.branch?.id) {
+            studentData.branch = currentUser.branch.id;
+          } else {
+            toast.error('No branch assigned to your account');
+            return;
+          }
+        }
       }
 
       await createStudent(studentData);
@@ -757,6 +774,7 @@ const StudentForm: React.FC<StudentFormProps> = ({
     dateOfBirth: student?.dateOfBirth ? student.dateOfBirth.split('T')[0] : '',
     course: student?.course._id || '',
     modules: student?.modules.join(', ') || '',
+    branch: student?.branch?._id || (currentUser?.role === 'superAdmin' ? selectedBranch : currentUser?.branch?.id) || '',
     status: student?.status || 'Active',
     enrollmentDate: student?.enrollmentDate ? student.enrollmentDate.split('T')[0] : new Date().toISOString().split('T')[0],
     gpa: student?.gpa?.toString() || '0',
@@ -764,10 +782,14 @@ const StudentForm: React.FC<StudentFormProps> = ({
     certifications: student?.certifications.join(', ') || ''
   });
 
-  // Clear course selection when branch changes for SuperAdmin
+  // Update form data when branch changes for SuperAdmin
   useEffect(() => {
     if (currentUser?.role === 'superAdmin' && !isEditing) {
-      setFormData(prev => ({ ...prev, course: '' }));
+      setFormData(prev => ({
+        ...prev,
+        course: '', // Clear course selection
+        branch: selectedBranch && selectedBranch !== 'all' ? selectedBranch : '' // Update branch
+      }));
     }
   }, [selectedBranch, currentUser?.role, isEditing]);
 
