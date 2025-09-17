@@ -21,7 +21,7 @@ export interface Course {
   branch: {
     _id: string;
     name: string;
-  } | 'all';
+  } | 'all' | null;
   createdBy: {
     _id: string;
     fullName: string;
@@ -195,10 +195,10 @@ export const restoreCourse = async (id: string): Promise<{ message: string }> =>
  * Get available branches for course creation
  */
 export const getBranches = async (): Promise<{ id: string; name: string }[]> => {
-  const response = await fetch(`${API_URL}/api/branches`, {
+  const response = await fetch(`${API_URL}/api/branches/active`, {
     headers: getAuthHeaders(),
   });
 
   const data = await handleResponse(response);
-  return data.branches || [];
+  return data || [];
 };

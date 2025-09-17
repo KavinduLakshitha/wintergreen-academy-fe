@@ -496,9 +496,9 @@ const CourseManagement = () => {
                         </div>
                         <div className="text-sm text-gray-600 mt-1">
                           <strong>Branch:</strong> {
-                            typeof course.branch === 'string' && course.branch === 'all'
+                            course.branch === 'all'
                               ? 'All Branches'
-                              : typeof course.branch === 'object'
+                              : course.branch && typeof course.branch === 'object' && course.branch.name
                                 ? course.branch.name
                                 : 'Unknown Branch'
                           }
