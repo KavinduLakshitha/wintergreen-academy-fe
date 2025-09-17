@@ -67,7 +67,7 @@ const AttendanceManagement = () => {
   // Filter states
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [selectedCourse, setSelectedCourse] = useState("");
-  const [selectedBranch, setSelectedBranch] = useState("");
+  const [selectedBranch, setSelectedBranch] = useState("all");
   const [searchTerm, setSearchTerm] = useState("");
   const [activeTab, setActiveTab] = useState("mark");
   
@@ -181,11 +181,11 @@ const AttendanceManagement = () => {
 
   const loadAttendanceStats = async () => {
     if (!selectedCourse || !user) return;
-    
+
     try {
       const dateStr = selectedDate.toISOString().split('T')[0];
-      const branchId = user.role === 'superAdmin' ? selectedBranch : user.branch?.id;
-      
+      const branchId = user.role === 'superAdmin' ? (selectedBranch === 'all' ? undefined : selectedBranch) : user.branch?.id;
+
       const result = await getAttendanceStats(selectedCourse, dateStr, branchId);
       if (result) {
         setAttendanceStats(result.stats);
@@ -302,7 +302,7 @@ const AttendanceManagement = () => {
 
       const filters = {
         courseId: selectedCourse,
-        branchId: user.role === 'superAdmin' ? selectedBranch : user.branch?.id,
+        branchId: user.role === 'superAdmin' ? (selectedBranch === 'all' ? undefined : selectedBranch) : user.branch?.id,
         dateFrom: selectedDate.toISOString().split('T')[0],
         dateTo: selectedDate.toISOString().split('T')[0]
       };
@@ -436,7 +436,7 @@ const AttendanceManagement = () => {
                     <SelectValue placeholder="Select branch" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">All Branches</SelectItem>
+                    <SelectItem value="all">All Branches</SelectItem>
                     {branches.map(branch => (
                       <SelectItem key={branch._id} value={branch._id}>
                         {branch.name}
@@ -616,8 +616,9 @@ const AttendanceManagement = () => {
                           )}
 
                           {canMarkAttendance() && (
-                            <>
+                            <React.Fragment key={`attendance-buttons-${student._id}`}>
                               <Button
+                                key={`present-${student._id}`}
                                 size="sm"
                                 variant={student.attendance?.status === 'Present' ? 'default' : 'outline'}
                                 onClick={() => handleMarkAttendance(student._id, 'Present')}
@@ -627,6 +628,7 @@ const AttendanceManagement = () => {
                                 Present
                               </Button>
                               <Button
+                                key={`late-${student._id}`}
                                 size="sm"
                                 variant={student.attendance?.status === 'Late' ? 'default' : 'outline'}
                                 onClick={() => handleMarkAttendance(student._id, 'Late')}
@@ -636,6 +638,7 @@ const AttendanceManagement = () => {
                                 Late
                               </Button>
                               <Button
+                                key={`absent-${student._id}`}
                                 size="sm"
                                 variant={student.attendance?.status === 'Absent' ? 'destructive' : 'outline'}
                                 onClick={() => handleMarkAttendance(student._id, 'Absent')}
@@ -645,6 +648,7 @@ const AttendanceManagement = () => {
                                 Absent
                               </Button>
                               <Button
+                                key={`excused-${student._id}`}
                                 size="sm"
                                 variant={student.attendance?.status === 'Excused' ? 'default' : 'outline'}
                                 onClick={() => handleMarkAttendance(student._id, 'Excused')}
@@ -652,7 +656,7 @@ const AttendanceManagement = () => {
                               >
                                 Excused
                               </Button>
-                            </>
+                            </React.Fragment>
                           )}
 
                           {canViewOnly() && (
@@ -731,7 +735,7 @@ const AttendanceRecordsView: React.FC<AttendanceRecordsViewProps> = ({
 
       const filters = {
         courseId: selectedCourse,
-        branchId: user.role === 'superAdmin' ? selectedBranch : user.branch?.id,
+        branchId: user.role === 'superAdmin' ? (selectedBranch === 'all' ? undefined : selectedBranch) : user.branch?.id,
         date: selectedDate.toISOString().split('T')[0],
         limit: 100
       };
