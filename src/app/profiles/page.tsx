@@ -77,6 +77,8 @@ const StudentProfileManagement = () => {
   const [courses, setCourses] = useState<Course[]>([]);
   const [filteredCourses, setFilteredCourses] = useState<Course[]>([]);
   const [selectedBranch, setSelectedBranch] = useState('all');
+
+
   const [statistics, setStatistics] = useState({
     totalStudents: 0,
     activeStudents: 0,
@@ -147,7 +149,7 @@ const StudentProfileManagement = () => {
   const fetchBranches = async () => {
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/branches`, {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/branches/active`, {
         headers: {
           'Authorization': `Bearer ${token}`
         }
@@ -155,7 +157,12 @@ const StudentProfileManagement = () => {
 
       if (response.ok) {
         const data = await response.json();
-        setBranches(data.branches || []);
+        // The branches/active endpoint returns an array directly
+        const branchesArray = Array.isArray(data) ? data.map(branch => ({ _id: branch.id, name: branch.name })) : [];
+        setBranches(branchesArray);
+      } else {
+        const errorText = await response.text();
+        console.error('Failed to fetch branches:', response.status, response.statusText, errorText);
       }
     } catch (error) {
       console.error('Error fetching branches:', error);
