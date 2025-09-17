@@ -175,6 +175,14 @@ const CourseManagement = () => {
       return;
     }
 
+    // Handle branch ID extraction safely
+    let branchId = '';
+    if (course.branch === 'all') {
+      branchId = 'all';
+    } else if (course.branch && typeof course.branch === 'object' && course.branch._id) {
+      branchId = course.branch._id;
+    }
+
     setFormData({
       title: course.title,
       duration: course.duration,
@@ -186,7 +194,7 @@ const CourseManagement = () => {
       nextStart: course.nextStart.split('T')[0], // Format date for input
       status: course.status,
       modules: course.modules || [],
-      branch: course.branch._id === 'all' ? 'all' : course.branch._id
+      branch: branchId
     });
     setEditingCourse(course);
     setShowFormDialog(true);
