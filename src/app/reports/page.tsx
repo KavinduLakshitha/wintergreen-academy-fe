@@ -525,7 +525,7 @@ const ReportsManagement = () => {
                   <div className="space-y-4">
                     <div className="grid grid-cols-2 gap-4 text-sm">
                       <div>
-                        <p className="text-gray-600">Today's Attendance:</p>
+                        <p className="text-gray-600">Today&apos;s Attendance:</p>
                         <p className="font-semibold">{dashboardStats?.attendanceStats.todayAttendance.toFixed(1) || '0.0'}%</p>
                       </div>
                       <div>

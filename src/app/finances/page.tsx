@@ -225,7 +225,18 @@ const FinanceManagement = () => {
   const loadTransactions = async () => {
     setTransactionsLoading(true);
     try {
-      const result = await getTransactions(transactionFilters);
+      // Prepare filters with proper typing
+      const filters = {
+        ...transactionFilters,
+        type: transactionFilters.type === 'income' || transactionFilters.type === 'expense'
+          ? transactionFilters.type as 'income' | 'expense'
+          : undefined,
+        status: transactionFilters.status === 'pending' || transactionFilters.status === 'completed' || transactionFilters.status === 'cancelled'
+          ? transactionFilters.status as 'pending' | 'completed' | 'cancelled'
+          : undefined
+      };
+
+      const result = await getTransactions(filters);
       if (result) {
         setTransactions(result.transactions);
       }
@@ -240,7 +251,18 @@ const FinanceManagement = () => {
   const loadBudgets = async () => {
     setBudgetsLoading(true);
     try {
-      const result = await getBudgets(budgetFilters);
+      // Prepare filters with proper typing
+      const filters = {
+        ...budgetFilters,
+        period: budgetFilters.period === 'monthly' || budgetFilters.period === 'quarterly' || budgetFilters.period === 'yearly'
+          ? budgetFilters.period as 'monthly' | 'quarterly' | 'yearly'
+          : undefined,
+        status: budgetFilters.status === 'active' || budgetFilters.status === 'inactive' || budgetFilters.status === 'completed' || budgetFilters.status === 'exceeded'
+          ? budgetFilters.status as 'active' | 'inactive' | 'completed' | 'exceeded'
+          : undefined
+      };
+
+      const result = await getBudgets(filters);
       if (result) {
         setBudgets(result.budgets);
       }

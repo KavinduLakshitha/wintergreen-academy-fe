@@ -346,6 +346,19 @@ export const getRecentActivity = async (filters: ReportsFilters = {}) => {
 };
 
 /**
+ * Get users by role chart data
+ */
+export const getUsersByRoleChartData = async (filters: ReportsFilters = {}) => {
+  const queryParams = buildQueryParams(filters);
+
+  const response = await fetch(`${API_URL}/api/dashboard/charts/users-by-role?${queryParams}`, {
+    headers: getAuthHeaders(),
+  });
+
+  return handleResponse(response);
+};
+
+/**
  * Get attendance statistics for a specific course and date
  */
 export const getAttendanceStats = async (courseId: string, date: string, branchId?: string): Promise<AttendanceStatistics> => {
