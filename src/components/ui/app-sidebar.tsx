@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useEffect, useState } from "react";
 import {
     Users,
     UserCheck,
@@ -10,6 +11,8 @@ import {
     FileText,
     LogOut,
     GraduationCap,
+    Building,
+    UserCog,
 } from "lucide-react";
 // import { useAuth } from "@/app/auth/auth-context"; // Not available yet
 import {
@@ -33,8 +36,9 @@ import {
 } from "@/components/ui/sidebar";
 import Image from "next/image";
 
-const navigationItems = [    
-    { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },  
+// Base navigation items available to all users
+const baseNavigationItems = [
+    { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
     { name: "Attendance", href: "/attendance", icon: UserCheck },
     { name: "Finances", href: "/finances", icon: DollarSign },
     { name: "Profiles", href: "/profiles", icon: Users },
@@ -42,19 +46,46 @@ const navigationItems = [
     { name: "Reports", href: "/reports", icon: FileText },
 ];
 
+// Additional navigation items for superAdmin
+const superAdminItems = [
+    { name: "Branches", href: "/branches", icon: Building },
+    { name: "Users", href: "/users", icon: Users },
+];
+
+// Additional navigation items for admin, moderator, staff
+const branchUserItems = [
+    { name: "Branch Users", href: "/branch-users", icon: UserCog },
+];
+
 export function AppSidebar() {
     const pathname = usePathname();
+    const [user, setUser] = useState<any>(null);
+    const [navigationItems, setNavigationItems] = useState(baseNavigationItems);
+
+    useEffect(() => {
+        // Get user from localStorage
+        const storedUser = localStorage.getItem('user');
+        if (storedUser) {
+            const userData = JSON.parse(storedUser);
+            setUser(userData);
+
+            // Set navigation items based on user role
+            let items = [...baseNavigationItems];
+
+            if (userData.role === 'superAdmin') {
+                items = [...items, ...superAdminItems];
+            } else {
+                items = [...items, ...branchUserItems];
+            }
+
+            setNavigationItems(items);
+        }
+    }, []);
 
     const handleLogout = async () => {
         localStorage.removeItem('token');
         localStorage.removeItem('user');
         window.location.href = '/';
-    };
-
-    const dummyUser = {
-        name: "Admin",
-        userType: "admin",
-        currentBranch: "Colombo"
     };
 
     return (
@@ -118,26 +149,28 @@ export function AppSidebar() {
                     <div className="mt-auto px-4 py-4">
                         <div className="flex items-center gap-3 mb-3">
                             <div className="w-10 h-10 rounded-full bg-[#2E8B57] flex items-center justify-center text-white font-semibold shadow-sm">
-                                {dummyUser.name ? dummyUser.name.charAt(0).toUpperCase() : "U"}
+                                {user?.fullName ? user.fullName.charAt(0).toUpperCase() : "U"}
                             </div>
                             <div className="flex-1 min-w-0">
                                 <p className="text-sm font-semibold text-gray-800 dark:text-gray-200 truncate">
-                                    {dummyUser.name}
+                                    {user?.fullName || "User"}
                                 </p>
                                 <p className="text-xs text-gray-500 dark:text-gray-400 truncate capitalize">
-                                    {dummyUser.userType}
+                                    {user?.role || "user"}
                                 </p>
                             </div>
                         </div>
-                        
-                        <div className="rounded-lg bg-gray-50 dark:bg-gray-800/50 px-3 py-2">
-                            <div className="flex items-center">
-                                <div className="w-2 h-2 rounded-full bg-[#2E8B57] mr-2"></div>
-                                <p className="text-xs font-medium text-gray-700 dark:text-gray-300">
-                                    {dummyUser.currentBranch}
-                                </p>
+
+                        {user?.branch && (
+                            <div className="rounded-lg bg-gray-50 dark:bg-gray-800/50 px-3 py-2">
+                                <div className="flex items-center">
+                                    <div className="w-2 h-2 rounded-full bg-[#2E8B57] mr-2"></div>
+                                    <p className="text-xs font-medium text-gray-700 dark:text-gray-300">
+                                        {user.branch.name}
+                                    </p>
+                                </div>
                             </div>
-                        </div>
+                        )}
                     </div>
 
                     {/* Logout Section */}
