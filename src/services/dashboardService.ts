@@ -11,6 +11,12 @@ export interface DashboardStats {
     recent: number;
     byRole: Record<string, number>;
   };
+  studentStats: {
+    totalStudents: number;
+    activeStudents: number;
+    graduatedStudents: number;
+    averageGPA: number;
+  };
   courseStats: {
     totalCourses: number;
     activeCourses: number;
@@ -51,7 +57,7 @@ export interface RecentActivity {
 export interface EnrollmentChartData {
   month: string;
   year: number;
-  newUsers: number;
+  newStudents: number;
 }
 
 export interface UserRoleChartData {
@@ -82,6 +88,40 @@ const handleResponse = async (response: Response) => {
   return response.json();
 };
 
+/**
+ * Retry function for failed requests
+ */
+const retryRequest = async <T>(
+  requestFn: () => Promise<T>,
+  maxRetries: number = 3,
+  delay: number = 1000
+): Promise<T> => {
+  let lastError: Error;
+
+  for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    try {
+      return await requestFn();
+    } catch (error) {
+      lastError = error as Error;
+
+      // Don't retry on authentication errors
+      if (lastError.message.includes('401') || lastError.message.includes('403')) {
+        throw lastError;
+      }
+
+      // If this is the last attempt, throw the error
+      if (attempt === maxRetries) {
+        throw lastError;
+      }
+
+      // Wait before retrying
+      await new Promise(resolve => setTimeout(resolve, delay * attempt));
+    }
+  }
+
+  throw lastError!;
+};
+
 // Helper function to build query parameters
 const buildQueryParams = (filters: DashboardFilters) => {
   const params = new URLSearchParams();
@@ -97,52 +137,60 @@ const buildQueryParams = (filters: DashboardFilters) => {
  * Get dashboard statistics
  */
 export const getDashboardStats = async (filters: DashboardFilters = {}): Promise<DashboardStats> => {
-  const queryParams = buildQueryParams(filters);
-  
-  const response = await fetch(`${API_URL}/api/dashboard/stats?${queryParams}`, {
-    headers: getAuthHeaders(),
-  });
+  return retryRequest(async () => {
+    const queryParams = buildQueryParams(filters);
 
-  return handleResponse(response);
+    const response = await fetch(`${API_URL}/api/dashboard/stats?${queryParams}`, {
+      headers: getAuthHeaders(),
+    });
+
+    return handleResponse(response);
+  });
 };
 
 /**
  * Get recent activity data
  */
 export const getRecentActivity = async (filters: DashboardFilters = {}): Promise<RecentActivity[]> => {
-  const queryParams = buildQueryParams(filters);
+  return retryRequest(async () => {
+    const queryParams = buildQueryParams(filters);
 
-  const response = await fetch(`${API_URL}/api/dashboard/recent-activity?${queryParams}`, {
-    headers: getAuthHeaders(),
+    const response = await fetch(`${API_URL}/api/dashboard/recent-activity?${queryParams}`, {
+      headers: getAuthHeaders(),
+    });
+
+    return handleResponse(response);
   });
-
-  return handleResponse(response);
 };
 
 /**
  * Get enrollment trend data for charts
  */
 export const getEnrollmentTrends = async (filters: DashboardFilters = {}): Promise<EnrollmentChartData[]> => {
-  const queryParams = buildQueryParams(filters);
-  
-  const response = await fetch(`${API_URL}/api/dashboard/charts/enrollment?${queryParams}`, {
-    headers: getAuthHeaders(),
-  });
+  return retryRequest(async () => {
+    const queryParams = buildQueryParams(filters);
 
-  return handleResponse(response);
+    const response = await fetch(`${API_URL}/api/dashboard/charts/enrollment?${queryParams}`, {
+      headers: getAuthHeaders(),
+    });
+
+    return handleResponse(response);
+  });
 };
 
 /**
  * Get users by role chart data
  */
 export const getUsersByRoleChartData = async (filters: DashboardFilters = {}): Promise<UserRoleChartData[]> => {
-  const queryParams = buildQueryParams(filters);
+  return retryRequest(async () => {
+    const queryParams = buildQueryParams(filters);
 
-  const response = await fetch(`${API_URL}/api/dashboard/charts/users-by-role?${queryParams}`, {
-    headers: getAuthHeaders(),
+    const response = await fetch(`${API_URL}/api/dashboard/charts/users-by-role?${queryParams}`, {
+      headers: getAuthHeaders(),
+    });
+
+    return handleResponse(response);
   });
-
-  return handleResponse(response);
 };
 
 /**

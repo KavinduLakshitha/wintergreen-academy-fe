@@ -18,8 +18,8 @@ import { useDashboard } from '@/contexts/DashboardContext';
 interface EnrollmentDataPoint {
   month: string;
   year: number;
-  newUsers: number;
-  totalUsers: number;
+  newStudents: number;
+  totalStudents: number;
 }
 
 const EnrollmentChart: React.FC = () => {
@@ -30,52 +30,52 @@ const EnrollmentChart: React.FC = () => {
   const enrollmentData: EnrollmentDataPoint[] = useMemo(() => {
     if (enrollmentTrends.length > 0) {
       // Use actual backend data and calculate cumulative totals
-      let runningTotal = stats?.userStats.total || 0;
-      
+      let runningTotal = stats?.studentStats?.totalStudents || 0;
+
       return enrollmentTrends.map((trend, index) => {
         // For the last entry, use current total; for others, calculate backwards
         if (index === enrollmentTrends.length - 1) {
           return {
             month: trend.month,
             year: trend.year,
-            newUsers: trend.newUsers,
-            totalUsers: runningTotal
+            newStudents: trend.newStudents,
+            totalStudents: runningTotal
           };
         } else {
-          runningTotal -= enrollmentTrends.slice(index + 1).reduce((sum, t) => sum + t.newUsers, 0);
+          runningTotal -= enrollmentTrends.slice(index + 1).reduce((sum, t) => sum + t.newStudents, 0);
           return {
             month: trend.month,
             year: trend.year,
-            newUsers: trend.newUsers,
-            totalUsers: runningTotal
+            newStudents: trend.newStudents,
+            totalStudents: runningTotal
           };
         }
       });
     }
 
     // Fallback mock data if no backend data
-    const currentTotal = stats?.userStats.total || 233;
+    const currentTotal = stats?.studentStats?.totalStudents || 150;
     const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'];
     const currentYear = new Date().getFullYear();
-    
+
     return months.map((month, index) => {
-      const newUsers = Math.floor(Math.random() * 20) + 15; // 15-35 new users
-      const totalUsers = Math.round(currentTotal * (0.7 + (index * 0.05))); // Progressive growth
-      
+      const newStudents = Math.floor(Math.random() * 15) + 8; // 8-23 new students
+      const totalStudents = Math.round(currentTotal * (0.7 + (index * 0.05))); // Progressive growth
+
       return {
         month,
         year: currentYear,
-        newUsers,
-        totalUsers
+        newStudents,
+        totalStudents
       };
     });
   }, [enrollmentTrends, stats]);
 
   const formatTooltipValue = (value: number, name: string) => {
-    if (name === 'New Users') {
-      return [`${value} new users`, name];
+    if (name === 'New Students') {
+      return [`${value} new students`, name];
     }
-    return [`${value} total users`, name];
+    return [`${value} total students`, name];
   };
 
   if (chartsError) {
@@ -83,7 +83,7 @@ const EnrollmentChart: React.FC = () => {
       <Card>
         <CardHeader>
           <CardTitle>Student Enrollment Trends</CardTitle>
-          <CardDescription>New user registrations and total enrollment</CardDescription>
+          <CardDescription>New student enrollments and total student count</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="h-[300px] flex items-center justify-center text-red-600">
@@ -125,7 +125,7 @@ const EnrollmentChart: React.FC = () => {
     <Card>
       <CardHeader>
         <CardTitle>Student Enrollment Trends</CardTitle>
-        <CardDescription>New user registrations and total enrollment</CardDescription>
+        <CardDescription>New student enrollments and total student count</CardDescription>
       </CardHeader>
       <CardContent>
         <ResponsiveContainer width="100%" height={300}>
@@ -164,26 +164,26 @@ const EnrollmentChart: React.FC = () => {
               wrapperStyle={{ paddingTop: '20px' }}
             />
             
-            {/* New Users Bar */}
-            <Bar 
+            {/* New Students Bar */}
+            <Bar
               yAxisId="left"
-              dataKey="newUsers" 
-              fill="#3B82F6" 
-              name="New Users"
+              dataKey="newStudents"
+              fill="#3B82F6"
+              name="New Students"
               radius={[4, 4, 0, 0]}
               opacity={0.8}
             />
             
-            {/* Total Users Line */}
-            <Line 
+            {/* Total Students Line */}
+            <Line
               yAxisId="right"
-              type="monotone" 
-              dataKey="totalUsers" 
-              stroke="#10B981" 
+              type="monotone"
+              dataKey="totalStudents"
+              stroke="#10B981"
               strokeWidth={3}
               dot={{ fill: '#10B981', strokeWidth: 2, r: 4 }}
               activeDot={{ r: 6, stroke: '#10B981', strokeWidth: 2 }}
-              name="Total Users"
+              name="Total Students"
             />
           </ComposedChart>
         </ResponsiveContainer>
@@ -191,21 +191,21 @@ const EnrollmentChart: React.FC = () => {
         {/* Summary Stats */}
         <div className="mt-4 grid grid-cols-3 gap-4 pt-4 border-t">
           <div className="text-center">
-            <p className="text-sm text-gray-600">Total Users</p>
+            <p className="text-sm text-gray-600">Total Students</p>
             <p className="text-lg font-semibold text-blue-600">
-              {stats?.userStats.total || 0}
+              {stats?.studentStats?.totalStudents || 0}
             </p>
           </div>
           <div className="text-center">
-            <p className="text-sm text-gray-600">Recent Users (30 days)</p>
+            <p className="text-sm text-gray-600">Active Students</p>
             <p className="text-lg font-semibold text-green-600">
-              {stats?.userStats.recent || 0}
+              {stats?.studentStats?.activeStudents || 0}
             </p>
           </div>
           <div className="text-center">
-            <p className="text-sm text-gray-600">Growth Rate</p>
+            <p className="text-sm text-gray-600">Graduated Students</p>
             <p className="text-lg font-semibold text-purple-600">
-              {stats ? `${stats.financialStats.growthRate.toFixed(1)}%` : '0%'}
+              {stats?.studentStats?.graduatedStudents || 0}
             </p>
           </div>
         </div>

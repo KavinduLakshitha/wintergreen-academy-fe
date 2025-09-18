@@ -123,11 +123,11 @@ const StatisticsCards: React.FC = () => {
       {/* Total Users */}
       <StatCard
         title="Total Users"
-        value={stats?.userStats.total || 0}
+        value={stats?.userStats?.total || 0}
         change={{
-          value: 12,
+          value: stats?.userStats?.recent || 0,
           isPositive: true,
-          label: 'from last month'
+          label: 'recent users'
         }}
         icon={<Users className="w-6 h-6" />}
         iconBgColor="bg-blue-100"

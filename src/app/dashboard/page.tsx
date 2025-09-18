@@ -92,37 +92,9 @@ const DashboardContent: React.FC = () => {
         </div>
 
         {/* Secondary Charts and Activity */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <RecentActivity />
           <UserRoleChart />
-
-          {/* Quick Actions Card */}
-          <div className="lg:col-span-1">
-            <div className="grid grid-cols-1 gap-6">
-              {/* Quick Actions */}
-              <div className="bg-white rounded-lg border p-6">
-                <h3 className="text-lg font-semibold mb-4">Quick Actions</h3>
-                <div className="grid grid-cols-2 gap-3">
-                  <Button variant="outline" className="h-16 flex flex-col items-center justify-center">
-                    <Users className="w-5 h-5 mb-1" />
-                    <span className="text-xs">Add User</span>
-                  </Button>
-                  <Button variant="outline" className="h-16 flex flex-col items-center justify-center">
-                    <Calendar className="w-5 h-5 mb-1" />
-                    <span className="text-xs">Attendance</span>
-                  </Button>
-                  <Button variant="outline" className="h-16 flex flex-col items-center justify-center">
-                    <DollarSign className="w-5 h-5 mb-1" />
-                    <span className="text-xs">Transaction</span>
-                  </Button>
-                  <Button variant="outline" className="h-16 flex flex-col items-center justify-center">
-                    <BookOpen className="w-5 h-5 mb-1" />
-                    <span className="text-xs">Courses</span>
-                  </Button>
-                </div>
-              </div>
-            </div>
-          </div>
         </div>
       </div>
     </div>
