@@ -68,6 +68,7 @@ const StudentProfileManagement = () => {
   const [selectedStudent, setSelectedStudent] = useState<Student | null>(null);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
+  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [courseFilter, setCourseFilter] = useState('all');
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
@@ -86,16 +87,17 @@ const StudentProfileManagement = () => {
     averageGPA: 0
   });
   // Check authentication and get user info
-  // Fetch students
-  const fetchStudents = useCallback(async () => {
+  // Create a stable search function that doesn't cause re-renders
+  const performSearch = useCallback(async (searchValue: string, statusValue: string, courseValue: string, branchValue: string) => {
     try {
       const params: Record<string, string> = {};
-      if (searchTerm) params.search = searchTerm;
-      if (statusFilter && statusFilter !== 'all') params.status = statusFilter;
-      if (courseFilter && courseFilter !== 'all') params.courseId = courseFilter;
+
+      if (searchValue) params.search = searchValue;
+      if (statusValue && statusValue !== 'all') params.status = statusValue;
+      if (courseValue && courseValue !== 'all') params.courseId = courseValue;
       // Add branch filtering for SuperAdmin
-      if (currentUser?.role === 'superAdmin' && selectedBranch && selectedBranch !== 'all') {
-        params.branchId = selectedBranch;
+      if (currentUser?.role === 'superAdmin' && branchValue && branchValue !== 'all') {
+        params.branchId = branchValue;
       }
 
       const response = await getStudents(params);
@@ -111,14 +113,19 @@ const StudentProfileManagement = () => {
         toast.error(getErrorMessage(error));
       }
     }
-  }, [searchTerm, statusFilter, courseFilter, selectedBranch, currentUser?.role, router]);
+  }, [currentUser?.role, router]);
+
+  // Fetch students - wrapper function for initial load
+  const fetchStudents = useCallback(async () => {
+    await performSearch('', statusFilter, courseFilter, selectedBranch);
+  }, [performSearch, statusFilter, courseFilter, selectedBranch]);
 
   // Fetch all data
   const fetchData = useCallback(async () => {
     try {
       setLoading(true);
       await Promise.all([
-        fetchStudents(),
+        fetchStudents(), // Initial load without search parameters
         fetchBranches(),
         fetchCourses(),
         fetchStatistics()
@@ -218,21 +225,23 @@ const StudentProfileManagement = () => {
     }
   }, [selectedBranch, courses]);
 
-  // Handle search and filters
+  // Debounce search term to prevent excessive API calls
   useEffect(() => {
-    const delayedSearch = setTimeout(() => {
-      fetchStudents();
+    const timer = setTimeout(() => {
+      setDebouncedSearchTerm(searchTerm);
     }, 300);
 
-    return () => clearTimeout(delayedSearch);
-  }, [searchTerm, statusFilter, courseFilter, selectedBranch, fetchStudents]);
+    return () => clearTimeout(timer);
+  }, [searchTerm]);
 
-  const filteredStudents = students.filter(student => {
-    const matchesSearch = student.fullName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         student.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         student.studentId.toLowerCase().includes(searchTerm.toLowerCase());
-    return matchesSearch;
-  });
+  // Handle search and filters when debounced search term or filters change
+  useEffect(() => {
+    performSearch(debouncedSearchTerm, statusFilter, courseFilter, selectedBranch);
+  }, [debouncedSearchTerm, statusFilter, courseFilter, selectedBranch, performSearch]);
+
+  // Remove client-side filtering since server-side filtering is already implemented
+  // This prevents double filtering and potential conflicts
+  const filteredStudents = students;
 
   // Handle student selection
   const handleStudentSelect = (student: Student) => {
@@ -422,10 +431,12 @@ const StudentProfileManagement = () => {
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
                 <Input
-                  placeholder="Search students..."
+                  key="student-search-input"
+                  placeholder="Search by name, email, or student ID..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   className="pl-10"
+                  autoComplete="off"
                 />
               </div>
             </div>
