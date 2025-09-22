@@ -12,6 +12,8 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Textarea } from '@/components/ui/textarea';
+import { Checkbox } from '@/components/ui/checkbox';
+import FileUpload from '@/components/FileUpload';
 import { User, Mail, Phone, MapPin, Calendar, BookOpen, Award, Edit, Plus, Search, Loader2, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 import {
@@ -83,8 +85,7 @@ const StudentProfileManagement = () => {
   const [statistics, setStatistics] = useState({
     totalStudents: 0,
     activeStudents: 0,
-    graduatedStudents: 0,
-    averageGPA: 0
+    graduatedStudents: 0
   });
   // Check authentication and get user info
   // Create a stable search function that doesn't cause re-renders
@@ -386,17 +387,7 @@ const StudentProfileManagement = () => {
             </div>
           </CardContent>
         </Card>
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-600">Average GPA</p>
-                <p className="text-2xl font-bold text-purple-600">{statistics.averageGPA.toFixed(2)}</p>
-              </div>
-              <Calendar className="w-8 h-8 text-purple-600" />
-            </div>
-          </CardContent>
-        </Card>
+
       </div>
 
       {/* Branch Selection for SuperAdmin */}
@@ -644,10 +635,12 @@ const StudentDetails: React.FC<StudentDetailsProps> = ({ student, onEdit, onDele
       </CardHeader>
       <CardContent>
         <Tabs defaultValue="personal" className="w-full">
-          <TabsList className="grid w-full grid-cols-3">
+          <TabsList className="grid w-full grid-cols-5">
             <TabsTrigger value="personal">Personal Info</TabsTrigger>
             <TabsTrigger value="academic">Academic Info</TabsTrigger>
             <TabsTrigger value="modules">Modules</TabsTrigger>
+            <TabsTrigger value="services">Services</TabsTrigger>
+            <TabsTrigger value="documents">Documents</TabsTrigger>
           </TabsList>
 
           <TabsContent value="personal" className="space-y-4">
@@ -697,10 +690,7 @@ const StudentDetails: React.FC<StudentDetailsProps> = ({ student, onEdit, onDele
                 <Label className="text-sm font-medium">Level</Label>
                 <p className="text-sm text-gray-600">{student.level}</p>
               </div>
-              <div>
-                <Label className="text-sm font-medium">GPA</Label>
-                <p className="text-sm text-gray-600">{student.gpa.toFixed(2)}</p>
-              </div>
+
               <div>
                 <Label className="text-sm font-medium">Enrollment Date</Label>
                 <p className="text-sm text-gray-600">{new Date(student.enrollmentDate).toLocaleDateString()}</p>
@@ -746,6 +736,100 @@ const StudentDetails: React.FC<StudentDetailsProps> = ({ student, onEdit, onDele
               )}
             </div>
           </TabsContent>
+
+          <TabsContent value="services" className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <Label className="text-sm font-medium mb-2 block">Care Services</Label>
+                <div className="space-y-2">
+                  <div className="flex items-center space-x-2">
+                    <div className={`w-3 h-3 rounded-full ${student.childBabyCare ? 'bg-green-500' : 'bg-gray-300'}`}></div>
+                    <span className="text-sm">Child/Baby Care</span>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <div className={`w-3 h-3 rounded-full ${student.elderCare ? 'bg-green-500' : 'bg-gray-300'}`}></div>
+                    <span className="text-sm">Elder Care</span>
+                  </div>
+                </div>
+              </div>
+              <div>
+                <Label className="text-sm font-medium mb-2 block">Additional Requirements</Label>
+                <div className="space-y-2">
+                  <div className="flex items-center space-x-2">
+                    <div className={`w-3 h-3 rounded-full ${student.hostelRequirement ? 'bg-green-500' : 'bg-gray-300'}`}></div>
+                    <span className="text-sm">Hostel Requirement</span>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <div className={`w-3 h-3 rounded-full ${student.mealRequirement ? 'bg-green-500' : 'bg-gray-300'}`}></div>
+                    <span className="text-sm">Meal Requirement</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div>
+              <Label className="text-sm font-medium mb-2 block">Personal Documents Checklist</Label>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                <div className="flex items-center space-x-2">
+                  <div className={`w-3 h-3 rounded-full ${student.personalDocuments.birthCertificate ? 'bg-green-500' : 'bg-gray-300'}`}></div>
+                  <span className="text-sm">Birth Certificate</span>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <div className={`w-3 h-3 rounded-full ${student.personalDocuments.gramaNiladhariCertificate ? 'bg-green-500' : 'bg-gray-300'}`}></div>
+                  <span className="text-sm">Grama Niladhari Certificate</span>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <div className={`w-3 h-3 rounded-full ${student.personalDocuments.guardianSpouseLetter ? 'bg-green-500' : 'bg-gray-300'}`}></div>
+                  <span className="text-sm">Guardian/Spouse Letter</span>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <div className={`w-3 h-3 rounded-full ${student.personalDocuments.originalCertificate.hasDocument ? 'bg-green-500' : 'bg-gray-300'}`}></div>
+                  <span className="text-sm">
+                    Original Certificate
+                    {student.personalDocuments.originalCertificate.title &&
+                      ` (${student.personalDocuments.originalCertificate.title})`
+                    }
+                  </span>
+                </div>
+              </div>
+            </div>
+          </TabsContent>
+
+          <TabsContent value="documents" className="space-y-4">
+            <div>
+              <Label className="text-sm font-medium mb-2 block">Uploaded Documents</Label>
+              {student.documents.length > 0 ? (
+                <div className="space-y-2">
+                  {student.documents.map((doc, index) => (
+                    <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                      <div className="flex items-center space-x-3">
+                        <div className="flex-shrink-0">
+                          {doc.type === 'image' && <span className="text-2xl">🖼️</span>}
+                          {doc.type === 'pdf' && <span className="text-2xl">📄</span>}
+                          {doc.type === 'document' && <span className="text-2xl">📝</span>}
+                        </div>
+                        <div>
+                          <p className="text-sm font-medium">{doc.name}</p>
+                          <p className="text-xs text-gray-500">
+                            {doc.type.toUpperCase()} • Uploaded {new Date(doc.uploadedAt).toLocaleDateString()}
+                          </p>
+                        </div>
+                      </div>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => window.open(doc.url, '_blank')}
+                      >
+                        View
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-sm text-gray-500">No documents uploaded</p>
+              )}
+            </div>
+          </TabsContent>
         </Tabs>
       </CardContent>
     </Card>
@@ -788,9 +872,22 @@ const StudentForm: React.FC<StudentFormProps> = ({
     branch: student?.branch?._id || (currentUser?.role === 'superAdmin' ? selectedBranch : currentUser?.branch?.id) || '',
     status: student?.status || 'Active',
     enrollmentDate: student?.enrollmentDate ? student.enrollmentDate.split('T')[0] : new Date().toISOString().split('T')[0],
-    gpa: student?.gpa?.toString() || '0',
     level: student?.level || 'Beginner',
-    certifications: student?.certifications.join(', ') || ''
+    certifications: student?.certifications.join(', ') || '',
+    childBabyCare: student?.childBabyCare || false,
+    elderCare: student?.elderCare || false,
+    documents: student?.documents || [],
+    personalDocuments: student?.personalDocuments || {
+      birthCertificate: false,
+      gramaNiladhariCertificate: false,
+      guardianSpouseLetter: false,
+      originalCertificate: {
+        hasDocument: false,
+        title: ''
+      }
+    },
+    hostelRequirement: student?.hostelRequirement || false,
+    mealRequirement: student?.mealRequirement || false
   });
 
   // Update form data when branch changes for SuperAdmin
@@ -813,7 +910,7 @@ const StudentForm: React.FC<StudentFormProps> = ({
     <form onSubmit={handleSubmit} className="space-y-4">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
-          <Label htmlFor="fullName">Full Name</Label>
+          <Label htmlFor="fullName">Full Name <span className="text-red-500">*</span></Label>
           <Input
             id="fullName"
             value={formData.fullName}
@@ -823,7 +920,7 @@ const StudentForm: React.FC<StudentFormProps> = ({
           />
         </div>
         <div>
-          <Label htmlFor="email">Email</Label>
+          <Label htmlFor="email">Email <span className="text-red-500">*</span></Label>
           <Input
             id="email"
             type="email"
@@ -834,7 +931,7 @@ const StudentForm: React.FC<StudentFormProps> = ({
           />
         </div>
         <div>
-          <Label htmlFor="phone">Phone</Label>
+          <Label htmlFor="phone">Phone <span className="text-red-500">*</span></Label>
           <Input
             id="phone"
             value={formData.phone}
@@ -844,7 +941,7 @@ const StudentForm: React.FC<StudentFormProps> = ({
           />
         </div>
         <div>
-          <Label htmlFor="dateOfBirth">Date of Birth</Label>
+          <Label htmlFor="dateOfBirth">Date of Birth <span className="text-red-500">*</span></Label>
           <Input
             id="dateOfBirth"
             type="date"
@@ -875,7 +972,7 @@ const StudentForm: React.FC<StudentFormProps> = ({
         )}
 
         <div>
-          <Label htmlFor="course">Course</Label>
+          <Label htmlFor="course">Course <span className="text-red-500">*</span></Label>
           <Select
             value={formData.course}
             onValueChange={(value) => setFormData({ ...formData, course: value })}
@@ -910,19 +1007,25 @@ const StudentForm: React.FC<StudentFormProps> = ({
           </Select>
         </div>
 
-        <div>
-          <Label htmlFor="gpa">GPA</Label>
-          <Input
-            id="gpa"
-            type="number"
-            step="0.1"
-            min="0"
-            max="4"
-            value={formData.gpa}
-            onChange={(e) => setFormData({ ...formData, gpa: e.target.value })}
-            className="focus:ring-[#2E8B57] focus:border-[#2E8B57]"
-            required
-          />
+        {/* Care Services */}
+        <div className="space-y-3">
+          <Label className="text-base font-medium">Care Services</Label>
+          <div className="flex items-center space-x-2">
+            <Checkbox
+              id="childBabyCare"
+              checked={formData.childBabyCare}
+              onCheckedChange={(checked) => setFormData({ ...formData, childBabyCare: checked as boolean })}
+            />
+            <Label htmlFor="childBabyCare" className="text-sm font-normal">Child/Baby Care</Label>
+          </div>
+          <div className="flex items-center space-x-2">
+            <Checkbox
+              id="elderCare"
+              checked={formData.elderCare}
+              onCheckedChange={(checked) => setFormData({ ...formData, elderCare: checked as boolean })}
+            />
+            <Label htmlFor="elderCare" className="text-sm font-normal">Elder Care</Label>
+          </div>
         </div>
 
         <div>
@@ -955,7 +1058,7 @@ const StudentForm: React.FC<StudentFormProps> = ({
       </div>
 
       <div>
-        <Label htmlFor="address">Address</Label>
+        <Label htmlFor="address">Address <span className="text-red-500">*</span></Label>
         <Textarea
           id="address"
           value={formData.address}
@@ -988,6 +1091,141 @@ const StudentForm: React.FC<StudentFormProps> = ({
           className="focus:ring-[#2E8B57] focus:border-[#2E8B57]"
           placeholder="e.g., CPR Certified, First Aid Certified, HIPAA Training"
         />
+      </div>
+
+      {/* Document Upload Section */}
+      <div>
+        <FileUpload
+          label="Upload Documents (Images/PDFs/Documents)"
+          multiple={true}
+          maxFiles={5}
+          onFilesChange={(files) => {
+            // Convert UploadedFile to StudentDocument format
+            const studentDocuments = files.map(file => ({
+              name: file.name,
+              url: file.url,
+              type: file.type,
+              uploadedAt: new Date().toISOString()
+            }));
+            setFormData({ ...formData, documents: studentDocuments });
+          }}
+          initialFiles={formData.documents.map(doc => ({
+            name: doc.name,
+            url: doc.url,
+            type: doc.type,
+            publicId: '', // We'll need to store this if we want to delete files
+            size: 0,
+            format: doc.type
+          }))}
+        />
+      </div>
+
+      {/* Personal Documents Checklist */}
+      <div className="space-y-3">
+        <Label className="text-base font-medium">Personal Documents Checklist</Label>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+          <div className="flex items-center space-x-2">
+            <Checkbox
+              id="birthCertificate"
+              checked={formData.personalDocuments.birthCertificate}
+              onCheckedChange={(checked) => setFormData({
+                ...formData,
+                personalDocuments: {
+                  ...formData.personalDocuments,
+                  birthCertificate: checked as boolean
+                }
+              })}
+            />
+            <Label htmlFor="birthCertificate" className="text-sm font-normal">Birth Certificate</Label>
+          </div>
+          <div className="flex items-center space-x-2">
+            <Checkbox
+              id="gramaNiladhariCertificate"
+              checked={formData.personalDocuments.gramaNiladhariCertificate}
+              onCheckedChange={(checked) => setFormData({
+                ...formData,
+                personalDocuments: {
+                  ...formData.personalDocuments,
+                  gramaNiladhariCertificate: checked as boolean
+                }
+              })}
+            />
+            <Label htmlFor="gramaNiladhariCertificate" className="text-sm font-normal">Grama Niladhari Certificate</Label>
+          </div>
+          <div className="flex items-center space-x-2">
+            <Checkbox
+              id="guardianSpouseLetter"
+              checked={formData.personalDocuments.guardianSpouseLetter}
+              onCheckedChange={(checked) => setFormData({
+                ...formData,
+                personalDocuments: {
+                  ...formData.personalDocuments,
+                  guardianSpouseLetter: checked as boolean
+                }
+              })}
+            />
+            <Label htmlFor="guardianSpouseLetter" className="text-sm font-normal">Letter from Guardian/Spouse</Label>
+          </div>
+          <div className="space-y-2">
+            <div className="flex items-center space-x-2">
+              <Checkbox
+                id="originalCertificate"
+                checked={formData.personalDocuments.originalCertificate.hasDocument}
+                onCheckedChange={(checked) => setFormData({
+                  ...formData,
+                  personalDocuments: {
+                    ...formData.personalDocuments,
+                    originalCertificate: {
+                      ...formData.personalDocuments.originalCertificate,
+                      hasDocument: checked as boolean
+                    }
+                  }
+                })}
+              />
+              <Label htmlFor="originalCertificate" className="text-sm font-normal">Original Certificate</Label>
+            </div>
+            {formData.personalDocuments.originalCertificate.hasDocument && (
+              <Input
+                placeholder="Enter certificate title"
+                value={formData.personalDocuments.originalCertificate.title}
+                onChange={(e) => setFormData({
+                  ...formData,
+                  personalDocuments: {
+                    ...formData.personalDocuments,
+                    originalCertificate: {
+                      ...formData.personalDocuments.originalCertificate,
+                      title: e.target.value
+                    }
+                  }
+                })}
+                className="focus:ring-[#2E8B57] focus:border-[#2E8B57]"
+              />
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* Additional Requirements */}
+      <div className="space-y-3">
+        <Label className="text-base font-medium">Additional Requirements</Label>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+          <div className="flex items-center space-x-2">
+            <Checkbox
+              id="hostelRequirement"
+              checked={formData.hostelRequirement}
+              onCheckedChange={(checked) => setFormData({ ...formData, hostelRequirement: checked as boolean })}
+            />
+            <Label htmlFor="hostelRequirement" className="text-sm font-normal">Hostel Requirement</Label>
+          </div>
+          <div className="flex items-center space-x-2">
+            <Checkbox
+              id="mealRequirement"
+              checked={formData.mealRequirement}
+              onCheckedChange={(checked) => setFormData({ ...formData, mealRequirement: checked as boolean })}
+            />
+            <Label htmlFor="mealRequirement" className="text-sm font-normal">Meal Requirement</Label>
+          </div>
+        </div>
       </div>
 
       <div className="flex justify-end space-x-2 pt-4">
