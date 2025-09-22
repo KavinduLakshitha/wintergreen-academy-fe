@@ -890,6 +890,9 @@ const StudentForm: React.FC<StudentFormProps> = ({
     mealRequirement: student?.mealRequirement || false
   });
 
+  // State for form validation errors
+  const [validationErrors, setValidationErrors] = useState<{[key: string]: boolean}>({});
+
   // Update form data when branch changes for SuperAdmin
   useEffect(() => {
     if (currentUser?.role === 'superAdmin' && !isEditing) {
@@ -903,61 +906,54 @@ const StudentForm: React.FC<StudentFormProps> = ({
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+
+    // Validate required fields
+    const errors: {[key: string]: boolean} = {};
+    const requiredFields = ['fullName', 'email', 'phone', 'dateOfBirth', 'course', 'address'];
+
+    // Add branch validation for SuperAdmin
+    if (currentUser?.role === 'superAdmin') {
+      if (!selectedBranch || selectedBranch === 'all') {
+        errors.branch = true;
+      }
+    }
+
+    requiredFields.forEach(field => {
+      const value = formData[field as keyof typeof formData];
+      if (!value || value === '') {
+        errors[field] = true;
+      }
+    });
+
+    setValidationErrors(errors);
+
+    // If there are validation errors, don't submit
+    if (Object.keys(errors).length > 0) {
+      toast.error('Please fill in all required fields');
+      return;
+    }
+
     onSubmit(formData);
   };
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div>
-          <Label htmlFor="fullName">Full Name <span className="text-red-500">*</span></Label>
-          <Input
-            id="fullName"
-            value={formData.fullName}
-            onChange={(e) => setFormData({ ...formData, fullName: e.target.value })}
-            className="focus:ring-[#2E8B57] focus:border-[#2E8B57]"
-            required
-          />
-        </div>
-        <div>
-          <Label htmlFor="email">Email <span className="text-red-500">*</span></Label>
-          <Input
-            id="email"
-            type="email"
-            value={formData.email}
-            onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-            className="focus:ring-[#2E8B57] focus:border-[#2E8B57]"
-            required
-          />
-        </div>
-        <div>
-          <Label htmlFor="phone">Phone <span className="text-red-500">*</span></Label>
-          <Input
-            id="phone"
-            value={formData.phone}
-            onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-            className="focus:ring-[#2E8B57] focus:border-[#2E8B57]"
-            required
-          />
-        </div>
-        <div>
-          <Label htmlFor="dateOfBirth">Date of Birth <span className="text-red-500">*</span></Label>
-          <Input
-            id="dateOfBirth"
-            type="date"
-            value={formData.dateOfBirth}
-            onChange={(e) => setFormData({ ...formData, dateOfBirth: e.target.value })}
-            className="focus:ring-[#2E8B57] focus:border-[#2E8B57]"
-            required
-          />
-        </div>
-
+      {/* Branch and Course Selection - Top Priority */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 bg-gray-50 rounded-lg border">
         {/* Branch Selection (SuperAdmin only) */}
         {currentUser?.role === 'superAdmin' && (
           <div>
-            <Label htmlFor="branch">Branch</Label>
-            <Select value={selectedBranch} onValueChange={setSelectedBranch}>
-              <SelectTrigger>
+            <Label htmlFor="branch" className="text-red-500">Branch <span className="text-red-500">*</span></Label>
+            <Select
+              value={selectedBranch}
+              onValueChange={(value) => {
+                setSelectedBranch(value);
+                if (validationErrors.branch) {
+                  setValidationErrors({ ...validationErrors, branch: false });
+                }
+              }}
+            >
+              <SelectTrigger className={validationErrors.branch ? 'border-red-500' : ''}>
                 <SelectValue placeholder="Select branch" />
               </SelectTrigger>
               <SelectContent>
@@ -968,17 +964,25 @@ const StudentForm: React.FC<StudentFormProps> = ({
                 ))}
               </SelectContent>
             </Select>
+            {validationErrors.branch && (
+              <p className="text-red-500 text-sm mt-1">Branch is required</p>
+            )}
           </div>
         )}
 
         <div>
-          <Label htmlFor="course">Course <span className="text-red-500">*</span></Label>
+          <Label htmlFor="course" className="text-red-500">Course <span className="text-red-500">*</span></Label>
           <Select
             value={formData.course}
-            onValueChange={(value) => setFormData({ ...formData, course: value })}
+            onValueChange={(value) => {
+              setFormData({ ...formData, course: value });
+              if (validationErrors.course) {
+                setValidationErrors({ ...validationErrors, course: false });
+              }
+            }}
             disabled={currentUser?.role === 'superAdmin' && (!selectedBranch || selectedBranch === 'all')}
           >
-            <SelectTrigger>
+            <SelectTrigger className={validationErrors.course ? 'border-red-500' : ''}>
               <SelectValue placeholder={currentUser?.role === 'superAdmin' && (!selectedBranch || selectedBranch === 'all') ? "Select branch first" : "Select course"} />
             </SelectTrigger>
             <SelectContent>
@@ -991,7 +995,99 @@ const StudentForm: React.FC<StudentFormProps> = ({
                 ))}
             </SelectContent>
           </Select>
+          {validationErrors.course && (
+            <p className="text-red-500 text-sm mt-1">Course is required</p>
+          )}
         </div>
+      </div>
+
+      {/* Personal Information */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+          <Label htmlFor="fullName" className="text-red-500">Full Name <span className="text-red-500">*</span></Label>
+          <Input
+            id="fullName"
+            value={formData.fullName}
+            onChange={(e) => {
+              setFormData({ ...formData, fullName: e.target.value });
+              // Clear validation error when user starts typing
+              if (validationErrors.fullName) {
+                setValidationErrors({ ...validationErrors, fullName: false });
+              }
+            }}
+            className={`focus:ring-[#2E8B57] focus:border-[#2E8B57] ${
+              validationErrors.fullName ? 'border-red-500 focus:border-red-500 focus:ring-red-500' : ''
+            }`}
+            required
+          />
+          {validationErrors.fullName && (
+            <p className="text-red-500 text-sm mt-1">Full Name is required</p>
+          )}
+        </div>
+        <div>
+          <Label htmlFor="email" className="text-red-500">Email <span className="text-red-500">*</span></Label>
+          <Input
+            id="email"
+            type="email"
+            value={formData.email}
+            onChange={(e) => {
+              setFormData({ ...formData, email: e.target.value });
+              if (validationErrors.email) {
+                setValidationErrors({ ...validationErrors, email: false });
+              }
+            }}
+            className={`focus:ring-[#2E8B57] focus:border-[#2E8B57] ${
+              validationErrors.email ? 'border-red-500 focus:border-red-500 focus:ring-red-500' : ''
+            }`}
+            required
+          />
+          {validationErrors.email && (
+            <p className="text-red-500 text-sm mt-1">Email is required</p>
+          )}
+        </div>
+        <div>
+          <Label htmlFor="phone" className="text-red-500">Phone <span className="text-red-500">*</span></Label>
+          <Input
+            id="phone"
+            value={formData.phone}
+            onChange={(e) => {
+              setFormData({ ...formData, phone: e.target.value });
+              if (validationErrors.phone) {
+                setValidationErrors({ ...validationErrors, phone: false });
+              }
+            }}
+            className={`focus:ring-[#2E8B57] focus:border-[#2E8B57] ${
+              validationErrors.phone ? 'border-red-500 focus:border-red-500 focus:ring-red-500' : ''
+            }`}
+            required
+          />
+          {validationErrors.phone && (
+            <p className="text-red-500 text-sm mt-1">Phone is required</p>
+          )}
+        </div>
+        <div>
+          <Label htmlFor="dateOfBirth" className="text-red-500">Date of Birth <span className="text-red-500">*</span></Label>
+          <Input
+            id="dateOfBirth"
+            type="date"
+            value={formData.dateOfBirth}
+            onChange={(e) => {
+              setFormData({ ...formData, dateOfBirth: e.target.value });
+              if (validationErrors.dateOfBirth) {
+                setValidationErrors({ ...validationErrors, dateOfBirth: false });
+              }
+            }}
+            className={`focus:ring-[#2E8B57] focus:border-[#2E8B57] ${
+              validationErrors.dateOfBirth ? 'border-red-500 focus:border-red-500 focus:ring-red-500' : ''
+            }`}
+            required
+          />
+          {validationErrors.dateOfBirth && (
+            <p className="text-red-500 text-sm mt-1">Date of Birth is required</p>
+          )}
+        </div>
+
+
 
         <div>
           <Label htmlFor="level">Level</Label>
@@ -1058,15 +1154,25 @@ const StudentForm: React.FC<StudentFormProps> = ({
       </div>
 
       <div>
-        <Label htmlFor="address">Address <span className="text-red-500">*</span></Label>
+        <Label htmlFor="address" className="text-red-500">Address <span className="text-red-500">*</span></Label>
         <Textarea
           id="address"
           value={formData.address}
-          onChange={(e) => setFormData({ ...formData, address: e.target.value })}
+          onChange={(e) => {
+            setFormData({ ...formData, address: e.target.value });
+            if (validationErrors.address) {
+              setValidationErrors({ ...validationErrors, address: false });
+            }
+          }}
           rows={2}
-          className="focus:ring-[#2E8B57] focus:border-[#2E8B57]"
+          className={`focus:ring-[#2E8B57] focus:border-[#2E8B57] ${
+            validationErrors.address ? 'border-red-500 focus:border-red-500 focus:ring-red-500' : ''
+          }`}
           required
         />
+        {validationErrors.address && (
+          <p className="text-red-500 text-sm mt-1">Address is required</p>
+        )}
       </div>
 
       <div>
