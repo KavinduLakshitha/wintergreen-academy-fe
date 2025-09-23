@@ -413,14 +413,14 @@ const ReportsManagement = () => {
           {/* Student Reports Tab */}
           <TabsContent value="student" className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {/* Student Performance Report */}
+              {/* Student Detailed Report */}
               <Card>
                 <CardHeader>
                   <CardTitle className="flex items-center">
                     <Users className="w-5 h-5 mr-2" />
-                    Student Performance Report
+                    Students Detailed Report
                   </CardTitle>
-                  <CardDescription>Comprehensive student statistics and performance metrics</CardDescription>
+                  <CardDescription>Complete student details including personal information, documents, and requirements</CardDescription>
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-4">
@@ -438,9 +438,20 @@ const ReportsManagement = () => {
                         <p className="font-semibold">{comprehensiveReport?.studentStats?.graduatedStudents || 0}</p>
                       </div>
                       <div>
-                        <p className="text-gray-600">Average GPA:</p>
-                        <p className="font-semibold">{comprehensiveReport?.studentStats?.averageGPA?.toFixed(2) || '0.00'}</p>
+                        <p className="text-gray-600">Branch Filter:</p>
+                        <p className="font-semibold">{reportFilters.branchId ? comprehensiveReport?.branchInfo?.name || 'Specific Branch' : 'All Branches'}</p>
                       </div>
+                    </div>
+                    <div className="bg-blue-50 p-3 rounded-lg">
+                      <p className="text-sm text-blue-800 font-medium">📋 Report includes:</p>
+                      <ul className="text-xs text-blue-700 mt-1 space-y-1">
+                        <li>• Complete student information (ID, name, contact details)</li>
+                        <li>• Course and branch details</li>
+                        <li>• Care services (Child/Baby care, Elder care)</li>
+                        <li>• Document upload status and personal documents checklist</li>
+                        <li>• Hostel and meal requirements</li>
+                        <li>• Enrollment and creation dates</li>
+                      </ul>
                     </div>
                     <div className="flex space-x-2">
                       <Button
@@ -453,7 +464,7 @@ const ReportsManagement = () => {
                         ) : (
                           <Download className="w-4 h-4 mr-2" />
                         )}
-                        Download Excel
+                        Download Detailed Excel
                       </Button>
                     </div>
                   </div>
@@ -512,14 +523,14 @@ const ReportsManagement = () => {
           {/* Attendance Reports Tab */}
           <TabsContent value="attendance" className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {/* Attendance Summary Report */}
+              {/* Attendance Detailed Report */}
               <Card>
                 <CardHeader>
                   <CardTitle className="flex items-center">
                     <PieChart className="w-5 h-5 mr-2" />
-                    Attendance Summary Report
+                    Attendance Detailed Report
                   </CardTitle>
-                  <CardDescription>Attendance statistics and rates overview</CardDescription>
+                  <CardDescription>Date-wise attendance records with complete student and course information</CardDescription>
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-4">
@@ -529,17 +540,28 @@ const ReportsManagement = () => {
                         <p className="font-semibold">{dashboardStats?.attendanceStats.todayAttendance.toFixed(1) || '0.0'}%</p>
                       </div>
                       <div>
-                        <p className="text-gray-600">Weekly Average:</p>
-                        <p className="font-semibold">{dashboardStats?.attendanceStats.weeklyAverage.toFixed(1) || '0.0'}%</p>
-                      </div>
-                      <div>
                         <p className="text-gray-600">Monthly Average:</p>
                         <p className="font-semibold">{dashboardStats?.attendanceStats.monthlyAverage.toFixed(1) || '0.0'}%</p>
                       </div>
                       <div>
-                        <p className="text-gray-600">Total Students:</p>
-                        <p className="font-semibold">{dashboardStats?.attendanceStats.totalStudents || 0}</p>
+                        <p className="text-gray-600">Date Range:</p>
+                        <p className="font-semibold">{reportFilters.startDate && reportFilters.endDate ? 'Custom Range' : 'All Records'}</p>
                       </div>
+                      <div>
+                        <p className="text-gray-600">Branch Filter:</p>
+                        <p className="font-semibold">{reportFilters.branchId ? comprehensiveReport?.branchInfo?.name || 'Specific Branch' : 'All Branches'}</p>
+                      </div>
+                    </div>
+                    <div className="bg-green-50 p-3 rounded-lg">
+                      <p className="text-sm text-green-800 font-medium">📅 Report includes:</p>
+                      <ul className="text-xs text-green-700 mt-1 space-y-1">
+                        <li>• Date-wise attendance records</li>
+                        <li>• Student details (ID, name, contact information)</li>
+                        <li>• Course and branch information</li>
+                        <li>• Attendance status (Present, Absent, Late, Excused)</li>
+                        <li>• Time in records and notes</li>
+                        <li>• Marked by information and timestamps</li>
+                      </ul>
                     </div>
                     <div className="flex space-x-2">
                       <Button
@@ -552,7 +574,7 @@ const ReportsManagement = () => {
                         ) : (
                           <Download className="w-4 h-4 mr-2" />
                         )}
-                        Download Excel
+                        Download Detailed Excel
                       </Button>
                     </div>
                   </div>
@@ -593,34 +615,46 @@ const ReportsManagement = () => {
           {/* Financial Reports Tab */}
           <TabsContent value="financial" className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {/* Financial Summary Report */}
+              {/* Budget Detailed Report */}
               <Card>
                 <CardHeader>
                   <CardTitle className="flex items-center">
                     <DollarSign className="w-5 h-5 mr-2" />
-                    Financial Summary Report
+                    Budget Detailed Report
                   </CardTitle>
-                  <CardDescription>Income, expense, and profit summary</CardDescription>
+                  <CardDescription>Complete budget records with allocation, spending, and utilization details</CardDescription>
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-4">
                     <div className="grid grid-cols-2 gap-4 text-sm">
                       <div>
-                        <p className="text-gray-600">Total Income:</p>
-                        <p className="font-semibold text-green-600">{formatCurrency(comprehensiveReport?.transactionStats?.totalIncome || 0)}</p>
+                        <p className="text-gray-600">Total Budgets:</p>
+                        <p className="font-semibold">{comprehensiveReport?.budgetStats?.totalBudgets || 0}</p>
                       </div>
                       <div>
-                        <p className="text-gray-600">Total Expenses:</p>
-                        <p className="font-semibold text-red-600">{formatCurrency(comprehensiveReport?.transactionStats?.totalExpenses || 0)}</p>
+                        <p className="text-gray-600">Total Allocated:</p>
+                        <p className="font-semibold text-blue-600">{formatCurrency(comprehensiveReport?.budgetStats?.totalAllocated || 0)}</p>
                       </div>
                       <div>
-                        <p className="text-gray-600">Net Profit:</p>
-                        <p className="font-semibold text-[#2E8B57]">{formatCurrency(comprehensiveReport?.transactionStats?.netProfit || 0)}</p>
+                        <p className="text-gray-600">Total Spent:</p>
+                        <p className="font-semibold text-red-600">{formatCurrency(comprehensiveReport?.budgetStats?.totalSpent || 0)}</p>
                       </div>
                       <div>
-                        <p className="text-gray-600">Pending Income:</p>
-                        <p className="font-semibold text-orange-600">{formatCurrency(comprehensiveReport?.transactionStats?.pendingIncome || 0)}</p>
+                        <p className="text-gray-600">Overall Utilization:</p>
+                        <p className="font-semibold text-[#2E8B57]">{comprehensiveReport?.budgetStats?.overallUtilization?.toFixed(1) || '0.0'}%</p>
                       </div>
+                    </div>
+                    <div className="bg-purple-50 p-3 rounded-lg">
+                      <p className="text-sm text-purple-800 font-medium">💰 Report includes:</p>
+                      <ul className="text-xs text-purple-700 mt-1 space-y-1">
+                        <li>• Budget categories and allocated amounts</li>
+                        <li>• Spent amounts and remaining balances</li>
+                        <li>• Budget periods (monthly, quarterly, yearly)</li>
+                        <li>• Start and end dates for each budget</li>
+                        <li>• Utilization percentages and status</li>
+                        <li>• Branch-wise budget allocation</li>
+                        <li>• Created and updated by information</li>
+                      </ul>
                     </div>
                     <div className="flex space-x-2">
                       <Button
@@ -633,7 +667,7 @@ const ReportsManagement = () => {
                         ) : (
                           <Download className="w-4 h-4 mr-2" />
                         )}
-                        Download Excel
+                        Download Detailed Excel
                       </Button>
                     </div>
                   </div>
