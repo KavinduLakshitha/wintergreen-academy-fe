@@ -319,7 +319,8 @@ const StudentProfileManagement = () => {
   // Check if user can add/edit students
   const canAddEdit = currentUser?.role === 'superAdmin' ||
                      currentUser?.role === 'admin' ||
-                     currentUser?.role === 'moderator';
+                     currentUser?.role === 'moderator' ||
+                     currentUser?.role === 'staff';
 
   if (loading) {
     return (
