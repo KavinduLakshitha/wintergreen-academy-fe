@@ -42,8 +42,8 @@ export interface Student {
   certifications: string[];
   childBabyCare: boolean;
   elderCare: boolean;
-  documents: StudentDocument[];
-  personalDocuments: PersonalDocuments;
+  documents?: StudentDocument[];
+  personalDocuments?: PersonalDocuments;
   hostelRequirement: boolean;
   mealRequirement: boolean;
   createdBy: {
