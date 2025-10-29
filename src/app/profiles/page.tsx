@@ -772,22 +772,22 @@ const StudentDetails: React.FC<StudentDetailsProps> = ({ student, onEdit, onDele
               <Label className="text-sm font-medium mb-2 block">Personal Documents Checklist</Label>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
                 <div className="flex items-center space-x-2">
-                  <div className={`w-3 h-3 rounded-full ${student.personalDocuments.birthCertificate ? 'bg-green-500' : 'bg-gray-300'}`}></div>
+                  <div className={`w-3 h-3 rounded-full ${student.personalDocuments?.birthCertificate ? 'bg-green-500' : 'bg-gray-300'}`}></div>
                   <span className="text-sm">Birth Certificate</span>
                 </div>
                 <div className="flex items-center space-x-2">
-                  <div className={`w-3 h-3 rounded-full ${student.personalDocuments.gramaNiladhariCertificate ? 'bg-green-500' : 'bg-gray-300'}`}></div>
+                  <div className={`w-3 h-3 rounded-full ${student.personalDocuments?.gramaNiladhariCertificate ? 'bg-green-500' : 'bg-gray-300'}`}></div>
                   <span className="text-sm">Grama Niladhari Certificate</span>
                 </div>
                 <div className="flex items-center space-x-2">
-                  <div className={`w-3 h-3 rounded-full ${student.personalDocuments.guardianSpouseLetter ? 'bg-green-500' : 'bg-gray-300'}`}></div>
+                  <div className={`w-3 h-3 rounded-full ${student.personalDocuments?.guardianSpouseLetter ? 'bg-green-500' : 'bg-gray-300'}`}></div>
                   <span className="text-sm">Guardian/Spouse Letter</span>
                 </div>
                 <div className="flex items-center space-x-2">
-                  <div className={`w-3 h-3 rounded-full ${student.personalDocuments.originalCertificate.hasDocument ? 'bg-green-500' : 'bg-gray-300'}`}></div>
+                  <div className={`w-3 h-3 rounded-full ${student.personalDocuments?.originalCertificate?.hasDocument ? 'bg-green-500' : 'bg-gray-300'}`}></div>
                   <span className="text-sm">
                     Original Certificate
-                    {student.personalDocuments.originalCertificate.title &&
+                    {student.personalDocuments?.originalCertificate?.title &&
                       ` (${student.personalDocuments.originalCertificate.title})`
                     }
                   </span>
@@ -799,7 +799,7 @@ const StudentDetails: React.FC<StudentDetailsProps> = ({ student, onEdit, onDele
           <TabsContent value="documents" className="space-y-4">
             <div>
               <Label className="text-sm font-medium mb-2 block">Uploaded Documents</Label>
-              {student.documents.length > 0 ? (
+              {student.documents && student.documents.length > 0 ? (
                 <div className="space-y-2">
                   {student.documents.map((doc, index) => (
                     <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
