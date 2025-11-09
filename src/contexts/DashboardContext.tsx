@@ -13,6 +13,7 @@ import {
   getUsersByRoleChartData,
   getErrorMessage
 } from '@/services/dashboardService';
+import { isUnauthorizedError } from '@/utils/auth';
 
 // Dashboard State Interface
 interface DashboardState {
@@ -157,7 +158,9 @@ export const DashboardProvider: React.FC<DashboardProviderProps> = ({ children }
       const stats = await getDashboardStats(state.filters);
       dispatch({ type: 'SET_STATS', payload: stats });
     } catch (error) {
-      dispatch({ type: 'SET_STATS_ERROR', payload: getErrorMessage(error) });
+      if (!isUnauthorizedError(error)) {
+        dispatch({ type: 'SET_STATS_ERROR', payload: getErrorMessage(error) });
+      }
     } finally {
       dispatch({ type: 'SET_LOADING_STATS', payload: false });
     }
@@ -170,7 +173,9 @@ export const DashboardProvider: React.FC<DashboardProviderProps> = ({ children }
       const activity = await getRecentActivity(state.filters);
       dispatch({ type: 'SET_RECENT_ACTIVITY', payload: activity });
     } catch (error) {
-      dispatch({ type: 'SET_ACTIVITY_ERROR', payload: getErrorMessage(error) });
+      if (!isUnauthorizedError(error)) {
+        dispatch({ type: 'SET_ACTIVITY_ERROR', payload: getErrorMessage(error) });
+      }
     } finally {
       dispatch({ type: 'SET_LOADING_ACTIVITY', payload: false });
     }
@@ -188,7 +193,9 @@ export const DashboardProvider: React.FC<DashboardProviderProps> = ({ children }
       dispatch({ type: 'SET_ENROLLMENT_TRENDS', payload: enrollmentTrends });
       dispatch({ type: 'SET_USER_ROLE_DISTRIBUTION', payload: userRoleDistribution });
     } catch (error) {
-      dispatch({ type: 'SET_CHARTS_ERROR', payload: getErrorMessage(error) });
+      if (!isUnauthorizedError(error)) {
+        dispatch({ type: 'SET_CHARTS_ERROR', payload: getErrorMessage(error) });
+      }
     } finally {
       dispatch({ type: 'SET_LOADING_CHARTS', payload: false });
     }

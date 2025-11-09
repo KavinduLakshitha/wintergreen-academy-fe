@@ -1,4 +1,18 @@
+import { isUnauthorizedStatus, signOutAndRedirect } from "@/utils/auth";
+
 const API_URL = process.env.NEXT_PUBLIC_API_URL;
+
+export class ApiError extends Error {
+  status: number;
+  data: Record<string, unknown>;
+
+  constructor(message: string, status: number, data: Record<string, unknown> = {}) {
+    super(message);
+    this.name = "ApiError";
+    this.status = status;
+    this.data = data;
+  }
+}
 
 // Types for Dashboard
 export interface DashboardStats {
@@ -83,7 +97,16 @@ const getAuthHeaders = () => {
 const handleResponse = async (response: Response) => {
   if (!response.ok) {
     const errorData = await response.json().catch(() => ({}));
-    throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
+    const status = response.status;
+    const message =
+      errorData.message ||
+      (status === 401 ? "Session expired. Please login again." : `HTTP error! status: ${status}`);
+
+    if (isUnauthorizedStatus(status)) {
+      signOutAndRedirect();
+    }
+
+    throw new ApiError(message, status, errorData);
   }
   return response.json();
 };
@@ -104,9 +127,8 @@ const retryRequest = async <T>(
     } catch (error) {
       lastError = error as Error;
 
-      // Don't retry on authentication errors
-      if (lastError.message.includes('401') || lastError.message.includes('403')) {
-        throw lastError;
+      if (error instanceof ApiError && isUnauthorizedStatus(error.status)) {
+        throw error;
       }
 
       // If this is the last attempt, throw the error
