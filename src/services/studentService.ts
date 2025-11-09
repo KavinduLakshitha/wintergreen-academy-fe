@@ -1,6 +1,23 @@
 const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
 // Types
+export interface StudentDocument {
+  name: string;
+  url: string;
+  type: 'image' | 'pdf' | 'document';
+  uploadedAt: string;
+}
+
+export interface PersonalDocuments {
+  birthCertificate: boolean;
+  gramaNiladhariCertificate: boolean;
+  guardianSpouseLetter: boolean;
+  originalCertificate: {
+    hasDocument: boolean;
+    title: string;
+  };
+}
+
 export interface Student {
   _id: string;
   studentId: string;
@@ -21,9 +38,14 @@ export interface Student {
   };
   status: 'Active' | 'Inactive' | 'Suspended' | 'Graduated' | 'Dropped';
   enrollmentDate: string;
-  gpa: number;
   level: 'Beginner' | 'Intermediate' | 'Advanced';
   certifications: string[];
+  childBabyCare: boolean;
+  elderCare: boolean;
+  documents?: StudentDocument[];
+  personalDocuments?: PersonalDocuments;
+  hostelRequirement: boolean;
+  mealRequirement: boolean;
   createdBy: {
     _id: string;
     fullName: string;
@@ -45,9 +67,14 @@ export interface StudentFormData {
   branch?: string;
   status: 'Active' | 'Inactive' | 'Suspended' | 'Graduated' | 'Dropped';
   enrollmentDate: string;
-  gpa: number;
   level: 'Beginner' | 'Intermediate' | 'Advanced';
   certifications: string[];
+  childBabyCare: boolean;
+  elderCare: boolean;
+  documents: StudentDocument[];
+  personalDocuments: PersonalDocuments;
+  hostelRequirement: boolean;
+  mealRequirement: boolean;
 }
 
 export interface StudentsResponse {
@@ -64,7 +91,6 @@ export interface StudentStatistics {
   totalStudents: number;
   activeStudents: number;
   graduatedStudents: number;
-  averageGPA: number;
 }
 
 /**
@@ -206,17 +232,30 @@ export const formatStudentForSubmission = (formData: any): StudentFormData => {
     address: formData.address?.trim() || '',
     dateOfBirth: formData.dateOfBirth || '',
     course: formData.course || '',
-    modules: Array.isArray(formData.modules) ? formData.modules : 
-             (typeof formData.modules === 'string' ? 
+    modules: Array.isArray(formData.modules) ? formData.modules :
+             (typeof formData.modules === 'string' ?
               formData.modules.split(',').map((m: string) => m.trim()).filter((m: string) => m) : []),
     branch: formData.branch || undefined,
     status: formData.status || 'Active',
     enrollmentDate: formData.enrollmentDate || new Date().toISOString().split('T')[0],
-    gpa: parseFloat(formData.gpa) || 0,
     level: formData.level || 'Beginner',
-    certifications: Array.isArray(formData.certifications) ? formData.certifications : 
-                    (typeof formData.certifications === 'string' ? 
-                     formData.certifications.split(',').map((c: string) => c.trim()).filter((c: string) => c) : [])
+    certifications: Array.isArray(formData.certifications) ? formData.certifications :
+                    (typeof formData.certifications === 'string' ?
+                     formData.certifications.split(',').map((c: string) => c.trim()).filter((c: string) => c) : []),
+    childBabyCare: formData.childBabyCare || false,
+    elderCare: formData.elderCare || false,
+    documents: formData.documents || [],
+    personalDocuments: formData.personalDocuments || {
+      birthCertificate: false,
+      gramaNiladhariCertificate: false,
+      guardianSpouseLetter: false,
+      originalCertificate: {
+        hasDocument: false,
+        title: ''
+      }
+    },
+    hostelRequirement: formData.hostelRequirement || false,
+    mealRequirement: formData.mealRequirement || false
   };
 };
 
@@ -234,8 +273,13 @@ export const formatStudentForForm = (student: Student) => {
     modules: student.modules.join(', '),
     status: student.status,
     enrollmentDate: student.enrollmentDate.split('T')[0],
-    gpa: student.gpa.toString(),
     level: student.level,
-    certifications: student.certifications.join(', ')
+    certifications: student.certifications.join(', '),
+    childBabyCare: student.childBabyCare,
+    elderCare: student.elderCare,
+    documents: student.documents,
+    personalDocuments: student.personalDocuments,
+    hostelRequirement: student.hostelRequirement,
+    mealRequirement: student.mealRequirement
   };
 };
