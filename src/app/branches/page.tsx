@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import React, { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -11,6 +11,7 @@ import { Badge } from "@/components/ui/badge"
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { Plus, Edit, Trash2, Search, Users } from 'lucide-react'
 import { toast } from 'sonner'
+import { getBranches } from '@/services/branchService'
 
 interface Branch {
   id: string
@@ -33,6 +34,8 @@ export default function BranchesPage() {
   const [formData, setFormData] = useState({
     name: ''
   })
+  const [isFetching, setIsFetching] = useState(false)
+  const retryCountRef = React.useRef(0)
 
   useEffect(() => {
     // Check authentication
@@ -42,32 +45,63 @@ export default function BranchesPage() {
       return
     }
     fetchBranches()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  const fetchBranches = async () => {
+  const fetchBranches = async (isRetry = false) => {
+    // Prevent multiple simultaneous requests
+    if (isFetching && !isRetry) {
+      return
+    }
+
     try {
-      const token = localStorage.getItem('token')
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/branches`, {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      })
+      setIsFetching(true)
       
-      if (response.ok) {
-        const data = await response.json()
-        setBranches(data.branches || [])
-      } else if (response.status === 401) {
+      // Only reset retry count on initial fetch, not on retries
+      if (!isRetry) {
+        retryCountRef.current = 0
+      }
+      
+      const result = await getBranches()
+      // Map the service response to match the component's Branch interface
+      const mappedBranches = (result.branches || []).map((branch: any) => ({
+        id: branch._id || branch.id,
+        name: branch.name,
+        isActive: branch.isActive,
+        userCount: branch.userCount || 0,
+        createdAt: branch.createdAt,
+        updatedAt: branch.updatedAt
+      }))
+      setBranches(mappedBranches)
+      // Reset retry count on success
+      retryCountRef.current = 0
+    } catch (error: any) {
+      console.error('Error fetching branches:', error)
+      
+      // Handle 429 errors with exponential backoff
+      if (error.status === 429 || error.message?.includes('429') || error.message?.includes('Too many requests')) {
+        if (retryCountRef.current < 3) {
+          retryCountRef.current += 1
+          const delay = Math.pow(2, retryCountRef.current) * 1000 // Exponential backoff: 2s, 4s, 8s
+          toast.error(`Too many requests. Retrying in ${delay / 1000} seconds...`)
+          setTimeout(() => {
+            fetchBranches(true)
+          }, delay)
+          return
+        } else {
+          toast.error('Too many requests. Please wait a few minutes and refresh the page.')
+        }
+      } else if (error.message?.includes('401') || error.message?.includes('Session')) {
         toast.error('Session expired. Please login again.')
         localStorage.removeItem('token')
         localStorage.removeItem('user')
         router.push('/auth')
       } else {
-        toast.error('Failed to fetch branches')
+        toast.error(error.message || 'Failed to fetch branches')
       }
-    } catch (error) {
-      toast.error('Error fetching branches')
     } finally {
       setLoading(false)
+      setIsFetching(false)
     }
   }
 

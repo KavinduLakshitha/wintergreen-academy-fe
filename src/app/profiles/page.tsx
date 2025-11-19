@@ -928,11 +928,56 @@ const StudentForm: React.FC<StudentFormProps> = ({
   branches,
   courses,
   filteredCourses,
-  selectedBranch,
+  selectedBranch: initialSelectedBranch,
   setSelectedBranch,
   currentUser,
   isEditing = false
 }) => {
+  // Use local state for branch selection to avoid parent re-renders
+  const [localSelectedBranch, setLocalSelectedBranch] = useState(
+    student?.branch?._id || (currentUser?.role === 'superAdmin' && initialSelectedBranch !== 'all' ? initialSelectedBranch : '')
+  );
+
+  // Filter courses based on local branch selection
+  const [localFilteredCourses, setLocalFilteredCourses] = useState<Course[]>(() => {
+    if (!localSelectedBranch || localSelectedBranch === 'all') {
+      return courses;
+    }
+    return courses.filter(course => {
+      if (course.branch && typeof course.branch === 'object' && course.branch._id === 'all') {
+        return true;
+      }
+      if (course.branch && typeof course.branch === 'object') {
+        return course.branch._id === localSelectedBranch;
+      }
+      if (typeof course.branch === 'string') {
+        return course.branch === 'all' || course.branch === localSelectedBranch;
+      }
+      return false;
+    });
+  });
+
+  // Update filtered courses when local branch changes
+  useEffect(() => {
+    if (!localSelectedBranch || localSelectedBranch === 'all') {
+      setLocalFilteredCourses(courses);
+    } else {
+      const filtered = courses.filter(course => {
+        if (course.branch && typeof course.branch === 'object' && course.branch._id === 'all') {
+          return true;
+        }
+        if (course.branch && typeof course.branch === 'object') {
+          return course.branch._id === localSelectedBranch;
+        }
+        if (typeof course.branch === 'string') {
+          return course.branch === 'all' || course.branch === localSelectedBranch;
+        }
+        return false;
+      });
+      setLocalFilteredCourses(filtered);
+    }
+  }, [localSelectedBranch, courses]);
+
   const [formData, setFormData] = useState({
     fullName: student?.fullName || '',
     email: student?.email || '',
@@ -941,7 +986,7 @@ const StudentForm: React.FC<StudentFormProps> = ({
     dateOfBirth: student?.dateOfBirth ? student.dateOfBirth.split('T')[0] : '',
     course: student?.course._id || '',
     modules: student?.modules.join(', ') || '',
-    branch: student?.branch?._id || (currentUser?.role === 'superAdmin' ? selectedBranch : currentUser?.branch?.id) || '',
+    branch: student?.branch?._id || (currentUser?.role === 'superAdmin' ? localSelectedBranch : currentUser?.branch?.id) || '',
     status: student?.status || 'Active',
     enrollmentDate: student?.enrollmentDate ? student.enrollmentDate.split('T')[0] : new Date().toISOString().split('T')[0],
     level: student?.level || 'Beginner',
@@ -965,16 +1010,16 @@ const StudentForm: React.FC<StudentFormProps> = ({
   // State for form validation errors
   const [validationErrors, setValidationErrors] = useState<{[key: string]: boolean}>({});
 
-  // Update form data when branch changes for SuperAdmin
+  // Update form data when local branch changes for SuperAdmin
   useEffect(() => {
     if (currentUser?.role === 'superAdmin' && !isEditing) {
       setFormData(prev => ({
         ...prev,
-        course: '', // Clear course selection
-        branch: selectedBranch && selectedBranch !== 'all' ? selectedBranch : '' // Update branch
+        course: '', // Clear course selection when branch changes
+        branch: localSelectedBranch && localSelectedBranch !== 'all' ? localSelectedBranch : ''
       }));
     }
-  }, [selectedBranch, currentUser?.role, isEditing]);
+  }, [localSelectedBranch, currentUser?.role, isEditing]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -985,7 +1030,7 @@ const StudentForm: React.FC<StudentFormProps> = ({
 
     // Add branch validation for SuperAdmin
     if (currentUser?.role === 'superAdmin') {
-      if (!selectedBranch || selectedBranch === 'all') {
+      if (!localSelectedBranch || localSelectedBranch === 'all') {
         errors.branch = true;
       }
     }
@@ -1005,7 +1050,15 @@ const StudentForm: React.FC<StudentFormProps> = ({
       return;
     }
 
-    onSubmit(formData);
+    // Ensure branch is set correctly from local state for SuperAdmin
+    const submissionData = {
+      ...formData,
+      branch: currentUser?.role === 'superAdmin' && localSelectedBranch && localSelectedBranch !== 'all' 
+        ? localSelectedBranch 
+        : formData.branch
+    };
+
+    onSubmit(submissionData);
   };
 
   return (
@@ -1017,9 +1070,9 @@ const StudentForm: React.FC<StudentFormProps> = ({
           <div>
             <Label htmlFor="branch" className="text-red-500">Branch <span className="text-red-500">*</span></Label>
             <Select
-              value={selectedBranch}
+              value={localSelectedBranch || 'all'}
               onValueChange={(value) => {
-                setSelectedBranch(value);
+                setLocalSelectedBranch(value === 'all' ? '' : value);
                 if (validationErrors.branch) {
                   setValidationErrors({ ...validationErrors, branch: false });
                 }
@@ -1029,6 +1082,7 @@ const StudentForm: React.FC<StudentFormProps> = ({
                 <SelectValue placeholder="Select branch" />
               </SelectTrigger>
               <SelectContent>
+                <SelectItem value="all">All Branches</SelectItem>
                 {branches.filter(branch => branch._id && branch.name).map((branch) => (
                   <SelectItem key={branch._id} value={branch._id}>
                     {branch.name}
@@ -1052,13 +1106,13 @@ const StudentForm: React.FC<StudentFormProps> = ({
                 setValidationErrors({ ...validationErrors, course: false });
               }
             }}
-            disabled={currentUser?.role === 'superAdmin' && (!selectedBranch || selectedBranch === 'all')}
+            disabled={currentUser?.role === 'superAdmin' && (!localSelectedBranch || localSelectedBranch === 'all')}
           >
             <SelectTrigger className={validationErrors.course ? 'border-red-500' : ''}>
-              <SelectValue placeholder={currentUser?.role === 'superAdmin' && (!selectedBranch || selectedBranch === 'all') ? "Select branch first" : "Select course"} />
+              <SelectValue placeholder={currentUser?.role === 'superAdmin' && (!localSelectedBranch || localSelectedBranch === 'all') ? "Select branch first" : "Select course"} />
             </SelectTrigger>
             <SelectContent>
-              {(currentUser?.role === 'superAdmin' ? filteredCourses : courses)
+              {(currentUser?.role === 'superAdmin' ? localFilteredCourses : courses)
                 .filter((course: Course) => course._id && course.title)
                 .map((course: Course) => (
                   <SelectItem key={course._id} value={course._id}>

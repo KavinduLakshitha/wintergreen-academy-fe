@@ -224,14 +224,14 @@ const ReportsManagement = () => {
   }
 
   return (
-    <div className="w-full mx-auto p-6 space-y-6">
-      <div className="mx-auto">
+    <div className="w-full mx-auto p-4 sm:p-6 space-y-4 sm:space-y-6">
+      <div className="mx-auto max-w-full overflow-x-hidden">
         {/* Header */}
-        <div className="mb-8">
-          <div className="flex justify-between items-center">
-            <div>
-              <h1 className="text-3xl font-bold text-gray-900 mb-2">Reports & Analytics</h1>
-              <p className="text-gray-600">Generate comprehensive reports and export data for analysis</p>
+        <div className="mb-6 sm:mb-8">
+          <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-4">
+            <div className="flex-1 min-w-0">
+              <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">Reports & Analytics</h1>
+              <p className="text-sm sm:text-base text-gray-600">Generate comprehensive reports and export data for analysis</p>
               {comprehensiveReport?.branchInfo && (
                 <p className="text-sm text-gray-500 mt-1">
                   Branch: {comprehensiveReport.branchInfo.name}
@@ -267,62 +267,62 @@ const ReportsManagement = () => {
         )}
 
         {/* Quick Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 mb-8">
           <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-gray-600">Total Students</p>
-                  <p className="text-2xl font-bold">{stats.totalStudents}</p>
-                  <p className="text-xs text-gray-500">{stats.activeStudents} active</p>
+            <CardContent className="p-4 sm:p-6">
+              <div className="flex items-center justify-between gap-3">
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium text-gray-600 mb-1">Total Students</p>
+                  <p className="text-lg sm:text-xl font-bold whitespace-nowrap">{stats.totalStudents}</p>
+                  <p className="text-sm text-gray-500 mt-1">{stats.activeStudents} active</p>
                 </div>
-                <div className="bg-[#2E8B57]/20 p-3 rounded-full">
-                  <Users className="w-6 h-6 text-[#2E8B57]" />
+                <div className="bg-[#2E8B57]/20 p-2 sm:p-3 rounded-full flex-shrink-0">
+                  <Users className="w-5 h-5 sm:w-6 sm:h-6 text-[#2E8B57]" />
                 </div>
               </div>
             </CardContent>
           </Card>
 
           <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-gray-600">Total Income</p>
-                  <p className="text-2xl font-bold text-[#2E8B57]">{formatCurrency(stats.monthlyIncome)}</p>
-                  <p className="text-xs text-gray-500">All time</p>
+            <CardContent className="p-4 sm:p-6">
+              <div className="flex items-center justify-between gap-3">
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium text-gray-600 mb-1">Total Income</p>
+                  <p className="text-lg sm:text-xl font-bold text-[#2E8B57] whitespace-nowrap">{formatCurrency(stats.monthlyIncome)}</p>
+                  <p className="text-sm text-gray-500 mt-1">All time</p>
                 </div>
-                <div className="bg-[#2E8B57]/20 p-3 rounded-full">
-                  <DollarSign className="w-6 h-6 text-[#2E8B57]" />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-gray-600">Attendance Rate</p>
-                  <p className="text-2xl font-bold text-[#2E8B57]">{stats.attendanceRate}%</p>
-                  <p className="text-xs text-gray-500">Monthly average</p>
-                </div>
-                <div className="bg-[#2E8B57]/20 p-3 rounded-full">
-                  <BarChart3 className="w-6 h-6 text-[#2E8B57]" />
+                <div className="bg-[#2E8B57]/20 p-2 sm:p-3 rounded-full flex-shrink-0">
+                  <DollarSign className="w-5 h-5 sm:w-6 sm:h-6 text-[#2E8B57]" />
                 </div>
               </div>
             </CardContent>
           </Card>
 
           <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-gray-600">Total Courses</p>
-                  <p className="text-2xl font-bold">{stats.totalCourses}</p>
-                  <p className="text-xs text-gray-500">Active courses</p>
+            <CardContent className="p-4 sm:p-6">
+              <div className="flex items-center justify-between gap-3">
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium text-gray-600 mb-1">Attendance Rate</p>
+                  <p className="text-lg sm:text-xl font-bold text-[#2E8B57] whitespace-nowrap">{stats.attendanceRate}%</p>
+                  <p className="text-sm text-gray-500 mt-1">Monthly average</p>
                 </div>
-                <div className="bg-[#2E8B57]/20 p-3 rounded-full">
-                  <BookOpen className="w-6 h-6 text-[#2E8B57]" />
+                <div className="bg-[#2E8B57]/20 p-2 sm:p-3 rounded-full flex-shrink-0">
+                  <BarChart3 className="w-5 h-5 sm:w-6 sm:h-6 text-[#2E8B57]" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardContent className="p-4 sm:p-6">
+              <div className="flex items-center justify-between gap-3">
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium text-gray-600 mb-1">Total Courses</p>
+                  <p className="text-lg sm:text-xl font-bold whitespace-nowrap">{stats.totalCourses}</p>
+                  <p className="text-sm text-gray-500 mt-1">Active courses</p>
+                </div>
+                <div className="bg-[#2E8B57]/20 p-2 sm:p-3 rounded-full flex-shrink-0">
+                  <BookOpen className="w-5 h-5 sm:w-6 sm:h-6 text-[#2E8B57]" />
                 </div>
               </div>
             </CardContent>

@@ -55,8 +55,11 @@ export const getBranches = async (filters: {
     });
 
     if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(errorData.message || 'Failed to fetch branches');
+      const errorData = await response.json().catch(() => ({}));
+      const errorMessage = errorData.message || `Failed to fetch branches (${response.status})`;
+      const error: any = new Error(errorMessage);
+      error.status = response.status;
+      throw error;
     }
 
     const data = await response.json();
