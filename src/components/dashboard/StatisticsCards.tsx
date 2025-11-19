@@ -58,25 +58,25 @@ const StatCard: React.FC<StatCardProps> = ({
 
   return (
     <Card>
-      <CardContent className="p-6">
-        <div className="flex items-center justify-between">
-          <div>
-            <p className="text-sm font-medium text-gray-600">{title}</p>
-            <p className="text-2xl font-bold">{value}</p>
+      <CardContent className="p-4 sm:p-6">
+        <div className="flex items-start sm:items-center justify-between gap-3">
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-medium text-gray-600 mb-1">{title}</p>
+            <p className="text-lg sm:text-xl font-bold whitespace-nowrap">{value}</p>
             {change && (
-              <p className={`text-xs flex items-center mt-1 ${
+              <p className={`text-sm flex items-center mt-2 ${
                 change.isPositive ? 'text-green-600' : 'text-red-600'
               }`}>
                 {change.isPositive ? (
-                  <ArrowUpRight className="w-3 h-3 mr-1" />
+                  <ArrowUpRight className="w-4 h-4 mr-1 flex-shrink-0" />
                 ) : (
-                  <ArrowDownRight className="w-3 h-3 mr-1" />
+                  <ArrowDownRight className="w-4 h-4 mr-1 flex-shrink-0" />
                 )}
-                {change.isPositive ? '+' : ''}{change.value}% {change.label}
+                <span className="whitespace-nowrap">{change.isPositive ? '+' : ''}{change.value}% {change.label}</span>
               </p>
             )}
           </div>
-          <div className={`${iconBgColor} p-3 rounded-full`}>
+          <div className={`${iconBgColor} p-2 sm:p-3 rounded-full flex-shrink-0`}>
             <div className={iconColor}>
               {icon}
             </div>
@@ -105,7 +105,7 @@ const StatisticsCards: React.FC = () => {
 
   if (statsError) {
     return (
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 mb-8">
         <Card className="col-span-full">
           <CardContent className="p-6">
             <div className="text-center text-red-600">
@@ -119,7 +119,7 @@ const StatisticsCards: React.FC = () => {
   }
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+    <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 mb-8">
       {/* Total Users */}
       <StatCard
         title="Total Users"

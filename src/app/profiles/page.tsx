@@ -365,12 +365,12 @@ const StudentProfileManagement = () => {
   };
 
   return (
-    <div className="container mx-auto p-6 space-y-6">
+    <div className="container mx-auto p-4 sm:p-6 space-y-4 sm:space-y-6">
       {/* Header */}
-      <div className="flex justify-between items-center">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900">Student Profile Management</h1>
-          <p className="text-gray-600 mt-1">Manage student profiles and enrollment</p>
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-4">
+        <div className="flex-1 min-w-0">
+          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Student Profile Management</h1>
+          <p className="text-sm sm:text-base text-gray-600 mt-1">Manage student profiles and enrollment</p>
         </div>
         {canAddEdit && (
           <Button
@@ -384,37 +384,37 @@ const StudentProfileManagement = () => {
       </div>
 
       {/* Statistics Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
         <Card>
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-600">Total Students</p>
-                <p className="text-2xl font-bold text-gray-900">{statistics.totalStudents}</p>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-medium text-gray-600 mb-1">Total Students</p>
+                <p className="text-lg sm:text-xl font-bold text-gray-900 whitespace-nowrap">{statistics.totalStudents}</p>
               </div>
-              <User className="w-8 h-8 text-[#2E8B57]" />
+              <User className="w-8 h-8 text-[#2E8B57] flex-shrink-0" />
             </div>
           </CardContent>
         </Card>
         <Card>
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-600">Active Students</p>
-                <p className="text-2xl font-bold text-green-600">{statistics.activeStudents}</p>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-medium text-gray-600 mb-1">Active Students</p>
+                <p className="text-lg sm:text-xl font-bold text-green-600 whitespace-nowrap">{statistics.activeStudents}</p>
               </div>
-              <BookOpen className="w-8 h-8 text-green-600" />
+              <BookOpen className="w-8 h-8 text-green-600 flex-shrink-0" />
             </div>
           </CardContent>
         </Card>
         <Card>
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-600">Graduated</p>
-                <p className="text-2xl font-bold text-blue-600">{statistics.graduatedStudents}</p>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-medium text-gray-600 mb-1">Graduated</p>
+                <p className="text-lg sm:text-xl font-bold text-blue-600 whitespace-nowrap">{statistics.graduatedStudents}</p>
               </div>
-              <Award className="w-8 h-8 text-blue-600" />
+              <Award className="w-8 h-8 text-blue-600 flex-shrink-0" />
             </div>
           </CardContent>
         </Card>
@@ -425,10 +425,10 @@ const StudentProfileManagement = () => {
       {currentUser?.role === 'superAdmin' && (
         <Card>
           <CardContent className="p-4">
-            <div className="flex items-center space-x-4">
+            <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4">
               <Label htmlFor="branch-select" className="text-sm font-medium">Select Branch:</Label>
               <Select value={selectedBranch} onValueChange={setSelectedBranch}>
-                <SelectTrigger className="w-64">
+                <SelectTrigger className="w-full sm:w-64">
                   <SelectValue placeholder="All Branches" />
                 </SelectTrigger>
                 <SelectContent>
@@ -665,26 +665,26 @@ const StudentDetails: React.FC<StudentDetailsProps> = ({ student, onEdit, onDele
   return (
     <Card>
       <CardHeader>
-        <div className="flex justify-between items-start">
+        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-4">
           <div className="flex items-center space-x-4">
-            <Avatar className="w-16 h-16">
+            <Avatar className="w-16 h-16 flex-shrink-0">
               <AvatarFallback className="text-lg bg-[#2E8B57]/10 text-[#2E8B57]">
                 {student.fullName.split(' ').map(n => n[0]).join('').toUpperCase()}
               </AvatarFallback>
             </Avatar>
-            <div>
-              <CardTitle className="text-2xl">{student.fullName}</CardTitle>
-              <CardDescription>{student.studentId} • {student.course.title}</CardDescription>
+            <div className="flex-1 min-w-0">
+              <CardTitle className="text-xl sm:text-2xl break-words">{student.fullName}</CardTitle>
+              <CardDescription className="break-words">{student.studentId} • {student.course.title}</CardDescription>
               <Badge className={`mt-2 ${getStatusColor(student.status)}`}>
                 {student.status}
               </Badge>
             </div>
           </div>
-          <div className="flex space-x-2">
+          <div className="flex flex-wrap gap-2">
             {canConvert && (
               <Button 
                 onClick={onConvertToNurseAide} 
-                className="bg-blue-600 hover:bg-blue-700 text-white"
+                className="bg-[#2E8B57] hover:bg-[#236446] text-white"
               >
                 <UserPlus className="w-4 h-4 mr-2" />
                 Convert to Nurse Aide

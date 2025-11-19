@@ -198,22 +198,22 @@ const FinancialChart: React.FC = () => {
         </ResponsiveContainer>
         
         {/* Summary Stats */}
-        <div className="mt-4 grid grid-cols-3 gap-4 pt-4 border-t">
-          <div className="text-center">
-            <p className="text-sm text-gray-600">Current Revenue</p>
-            <p className="text-lg font-semibold text-green-600">
+        <div className="mt-4 grid grid-cols-1 2xl:grid-cols-3 gap-4 sm:gap-6 pt-4 border-t">
+          <div className="text-center px-2">
+            <p className="text-sm text-gray-600 mb-1">Current Revenue</p>
+            <p className="text-lg sm:text-xl font-semibold text-green-600 whitespace-nowrap">
               {stats ? formatCurrency(stats.financialStats.monthlyRevenue) : '-'}
             </p>
           </div>
-          <div className="text-center">
-            <p className="text-sm text-gray-600">Current Expenses</p>
-            <p className="text-lg font-semibold text-red-600">
+          <div className="text-center px-2">
+            <p className="text-sm text-gray-600 mb-1">Current Expenses</p>
+            <p className="text-lg sm:text-xl font-semibold text-red-600 whitespace-nowrap">
               {stats ? formatCurrency(stats.financialStats.monthlyExpenses) : '-'}
             </p>
           </div>
-          <div className="text-center">
-            <p className="text-sm text-gray-600">Net Profit</p>
-            <p className={`text-lg font-semibold ${
+          <div className="text-center px-2">
+            <p className="text-sm text-gray-600 mb-1">Net Profit</p>
+            <p className={`text-lg sm:text-xl font-semibold whitespace-nowrap ${
               (stats?.financialStats.netProfit || 0) >= 0 ? 'text-green-600' : 'text-red-600'
             }`}>
               {stats ? formatCurrency(stats.financialStats.netProfit) : '-'}

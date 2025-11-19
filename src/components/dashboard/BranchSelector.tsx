@@ -88,9 +88,9 @@ const BranchSelector: React.FC = () => {
 
   return (
     <Card className="mb-6">
-      <CardContent className="p-4">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-4">
+      <CardContent className="p-4 sm:p-6">
+        <div className="flex flex-col 2xl:flex-row 2xl:items-center 2xl:justify-between gap-4">
+          <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4">
             <div className="flex items-center space-x-2">
               <Building2 className="w-5 h-5 text-gray-600" />
               <span className="text-sm font-medium text-gray-700">Branch Filter:</span>
@@ -101,7 +101,7 @@ const BranchSelector: React.FC = () => {
               onValueChange={handleBranchChange}
               disabled={isLoadingBranches}
             >
-              <SelectTrigger className="w-64">
+              <SelectTrigger className="w-full sm:w-64">
                 <SelectValue placeholder="Select a branch">
                   <div className="flex items-center space-x-2">
                     {(!filters.branchId || filters.branchId === 'all') ? (
@@ -109,7 +109,7 @@ const BranchSelector: React.FC = () => {
                     ) : (
                       <Building2 className="w-4 h-4 text-green-600" />
                     )}
-                    <span>{getCurrentBranchName()}</span>
+                    <span className="truncate">{getCurrentBranchName()}</span>
                   </div>
                 </SelectValue>
               </SelectTrigger>
@@ -136,8 +136,8 @@ const BranchSelector: React.FC = () => {
           </div>
 
           {/* Branch Statistics */}
-          <div className="flex items-center space-x-6 text-sm text-gray-600">
-            <div className="flex items-center space-x-1">
+          <div className="flex flex-wrap items-center gap-3 sm:gap-4 2xl:gap-6 text-sm text-gray-600">
+            <div className="flex items-center space-x-2">
               <span>Total Branches:</span>
               <Badge className="bg-blue-100 text-blue-800">
                 {getTotalBranches()}
@@ -145,7 +145,7 @@ const BranchSelector: React.FC = () => {
             </div>
             
             {stats?.branchInfo && (
-              <div className="flex items-center space-x-1">
+              <div className="flex items-center space-x-2">
                 <span>Current:</span>
                 <Badge className="bg-green-100 text-green-800">
                   {stats.branchInfo.name}
@@ -154,7 +154,7 @@ const BranchSelector: React.FC = () => {
             )}
             
             {stats?.branchStats && (
-              <div className="flex items-center space-x-1">
+              <div className="flex items-center space-x-2">
                 <span>System Users:</span>
                 <Badge className="bg-purple-100 text-purple-800">
                   {stats.branchStats.totalSystemUsers}

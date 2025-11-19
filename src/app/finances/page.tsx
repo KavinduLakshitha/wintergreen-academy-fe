@@ -459,34 +459,28 @@ const FinanceManagement = () => {
   }
 
   return (
-    <div className="container mx-auto p-6 space-y-6">
-      <div className="flex justify-between items-center">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900">Finance Management</h1>
-          <p className="text-gray-600 mt-1">
+    <div className="container mx-auto p-4 sm:p-6 space-y-4 sm:space-y-6">
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-4">
+        <div className="flex-1 min-w-0">
+          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Finance Management</h1>
+          <p className="text-sm sm:text-base text-gray-600 mt-1">
             Manage transactions and budgets for {user?.branch?.name || 'all branches'}
           </p>
-        </div>
-        <div className="flex gap-2">
-          <Button variant="outline" onClick={() => window.location.reload()}>
-            <RefreshCw className="w-4 h-4 mr-2" />
-            Refresh
-          </Button>
         </div>
       </div>
 
       {/* Financial Overview Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Total Income</CardTitle>
             <TrendingUp className="h-4 w-4 text-green-600" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-green-600">
+            <div className="text-lg sm:text-xl font-bold text-green-600 whitespace-nowrap">
               {formatCurrency(transactionStats?.totalIncome || 0)}
             </div>
-            <p className="text-xs text-muted-foreground">
+            <p className="text-sm text-muted-foreground mt-1">
               Completed transactions
             </p>
           </CardContent>
@@ -498,10 +492,10 @@ const FinanceManagement = () => {
             <TrendingDown className="h-4 w-4 text-red-600" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-red-600">
+            <div className="text-lg sm:text-xl font-bold text-red-600 whitespace-nowrap">
               {formatCurrency(transactionStats?.totalExpenses || 0)}
             </div>
-            <p className="text-xs text-muted-foreground">
+            <p className="text-sm text-muted-foreground mt-1">
               Completed transactions
             </p>
           </CardContent>
@@ -513,10 +507,10 @@ const FinanceManagement = () => {
             <DollarSign className="h-4 w-4 text-blue-600" />
           </CardHeader>
           <CardContent>
-            <div className={`text-2xl font-bold ${(transactionStats?.netProfit || 0) >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+            <div className={`text-lg sm:text-xl font-bold whitespace-nowrap ${(transactionStats?.netProfit || 0) >= 0 ? 'text-green-600' : 'text-red-600'}`}>
               {formatCurrency(transactionStats?.netProfit || 0)}
             </div>
-            <p className="text-xs text-muted-foreground">
+            <p className="text-sm text-muted-foreground mt-1">
               Income - Expenses
             </p>
           </CardContent>
@@ -528,10 +522,10 @@ const FinanceManagement = () => {
             <Clock className="h-4 w-4 text-yellow-600" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-yellow-600">
+            <div className="text-lg sm:text-xl font-bold text-yellow-600 whitespace-nowrap">
               {transactionStats?.pendingTransactions || 0}
             </div>
-            <p className="text-xs text-muted-foreground">
+            <p className="text-sm text-muted-foreground mt-1">
               {formatCurrency(transactionStats?.pendingIncome || 0)} pending income
             </p>
           </CardContent>
@@ -1049,17 +1043,17 @@ const BudgetManagement: React.FC<BudgetManagementProps> = ({
   return (
     <div className="space-y-6">
       {/* Budget Statistics */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Total Allocated</CardTitle>
             <Wallet className="h-4 w-4 text-blue-600" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-blue-600">
+            <div className="text-lg sm:text-xl font-bold text-blue-600 whitespace-nowrap">
               {formatCurrency(budgetStats?.totalAllocated || 0)}
             </div>
-            <p className="text-xs text-muted-foreground">
+            <p className="text-sm text-muted-foreground mt-1">
               Across all budgets
             </p>
           </CardContent>
@@ -1071,10 +1065,10 @@ const BudgetManagement: React.FC<BudgetManagementProps> = ({
             <CreditCard className="h-4 w-4 text-red-600" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-red-600">
+            <div className="text-lg sm:text-xl font-bold text-red-600 whitespace-nowrap">
               {formatCurrency(budgetStats?.totalSpent || 0)}
             </div>
-            <p className="text-xs text-muted-foreground">
+            <p className="text-sm text-muted-foreground mt-1">
               {budgetStats?.overallUtilization || 0}% utilization
             </p>
           </CardContent>
@@ -1086,10 +1080,10 @@ const BudgetManagement: React.FC<BudgetManagementProps> = ({
             <DollarSign className="h-4 w-4 text-green-600" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-green-600">
+            <div className="text-lg sm:text-xl font-bold text-green-600 whitespace-nowrap">
               {formatCurrency(budgetStats?.totalRemaining || 0)}
             </div>
-            <p className="text-xs text-muted-foreground">
+            <p className="text-sm text-muted-foreground mt-1">
               Available to spend
             </p>
           </CardContent>
@@ -1101,10 +1095,10 @@ const BudgetManagement: React.FC<BudgetManagementProps> = ({
             <AlertTriangle className="h-4 w-4 text-red-600" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-red-600">
+            <div className="text-lg sm:text-xl font-bold text-red-600 whitespace-nowrap">
               {budgetStats?.exceededBudgets || 0}
             </div>
-            <p className="text-xs text-muted-foreground">
+            <p className="text-sm text-muted-foreground mt-1">
               Out of {budgetStats?.totalBudgets || 0} total
             </p>
           </CardContent>

@@ -189,22 +189,22 @@ const EnrollmentChart: React.FC = () => {
         </ResponsiveContainer>
         
         {/* Summary Stats */}
-        <div className="mt-4 grid grid-cols-3 gap-4 pt-4 border-t">
-          <div className="text-center">
-            <p className="text-sm text-gray-600">Total Students</p>
-            <p className="text-lg font-semibold text-blue-600">
+        <div className="mt-4 grid grid-cols-1 2xl:grid-cols-3 gap-4 sm:gap-6 pt-4 border-t">
+          <div className="text-center px-2">
+            <p className="text-sm text-gray-600 mb-1">Total Students</p>
+            <p className="text-lg sm:text-xl font-semibold text-blue-600 whitespace-nowrap">
               {stats?.studentStats?.totalStudents || 0}
             </p>
           </div>
-          <div className="text-center">
-            <p className="text-sm text-gray-600">Active Students</p>
-            <p className="text-lg font-semibold text-green-600">
+          <div className="text-center px-2">
+            <p className="text-sm text-gray-600 mb-1">Active Students</p>
+            <p className="text-lg sm:text-xl font-semibold text-green-600 whitespace-nowrap">
               {stats?.studentStats?.activeStudents || 0}
             </p>
           </div>
-          <div className="text-center">
-            <p className="text-sm text-gray-600">Graduated Students</p>
-            <p className="text-lg font-semibold text-purple-600">
+          <div className="text-center px-2">
+            <p className="text-sm text-gray-600 mb-1">Graduated Students</p>
+            <p className="text-lg sm:text-xl font-semibold text-purple-600 whitespace-nowrap">
               {stats?.studentStats?.graduatedStudents || 0}
             </p>
           </div>
