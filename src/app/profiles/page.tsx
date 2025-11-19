@@ -14,7 +14,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Textarea } from '@/components/ui/textarea';
 import { Checkbox } from '@/components/ui/checkbox';
 import FileUpload from '@/components/FileUpload';
-import { User, Mail, Phone, MapPin, Calendar, BookOpen, Award, Edit, Plus, Search, Loader2, Trash2 } from 'lucide-react';
+import { User, Mail, Phone, MapPin, Calendar, BookOpen, Award, Edit, Plus, Search, Loader2, Trash2, UserPlus } from 'lucide-react';
 import { toast } from 'sonner';
 import {
   Student,
@@ -27,6 +27,17 @@ import {
   formatStudentForSubmission
 } from '@/services/studentService';
 import { getCourses } from '@/services/courseService';
+import ConvertToNurseAideDialog from '@/components/ConvertToNurseAideDialog';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 // Utility function for status colors
 const getStatusColor = (status: string) => {
@@ -80,7 +91,9 @@ const StudentProfileManagement = () => {
   const [courses, setCourses] = useState<Course[]>([]);
   const [filteredCourses, setFilteredCourses] = useState<Course[]>([]);
   const [selectedBranch, setSelectedBranch] = useState('all');
-
+  const [isConvertDialogOpen, setIsConvertDialogOpen] = useState(false);
+  const [isConfirmDialogOpen, setIsConfirmDialogOpen] = useState(false);
+  const [studentToConvert, setStudentToConvert] = useState<Student | null>(null);
 
   const [statistics, setStatistics] = useState({
     totalStudents: 0,
@@ -322,6 +335,23 @@ const StudentProfileManagement = () => {
                      currentUser?.role === 'moderator' ||
                      currentUser?.role === 'staff';
 
+  // Handle convert to nurse aide
+  const handleConvertToNurseAide = (student: Student) => {
+    setStudentToConvert(student);
+    setIsConfirmDialogOpen(true);
+  };
+
+  const handleConfirmConversion = () => {
+    setIsConfirmDialogOpen(false);
+    setIsConvertDialogOpen(true);
+  };
+
+  const handleConversionSuccess = () => {
+    setIsConvertDialogOpen(false);
+    setStudentToConvert(null);
+    toast.success('Student converted to Nurse Aide successfully');
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -523,8 +553,10 @@ const StudentProfileManagement = () => {
               student={selectedStudent}
               onEdit={() => setIsEditDialogOpen(true)}
               onDelete={() => handleDeleteStudent(selectedStudent._id)}
+              onConvertToNurseAide={() => handleConvertToNurseAide(selectedStudent)}
               canEdit={canAddEdit}
               canDelete={canAddEdit}
+              canConvert={canAddEdit}
             />
           ) : (
             <Card>
@@ -587,6 +619,34 @@ const StudentProfileManagement = () => {
           )}
         </DialogContent>
       </Dialog>
+
+      {/* Convert to Nurse Aide Confirmation Dialog */}
+      <AlertDialog open={isConfirmDialogOpen} onOpenChange={setIsConfirmDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Convert Student to Nurse Aide?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to convert <strong>{studentToConvert?.fullName}</strong> to a Nurse Aide? 
+              This will create a new employee record in the HR system. You will be able to review and complete 
+              the employee information in the next step.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleConfirmConversion}>
+              Continue
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Convert to Nurse Aide Dialog */}
+      <ConvertToNurseAideDialog
+        open={isConvertDialogOpen}
+        onOpenChange={setIsConvertDialogOpen}
+        student={studentToConvert}
+        onSuccess={handleConversionSuccess}
+      />
     </div>
   );
 };
@@ -595,11 +655,13 @@ interface StudentDetailsProps {
   student: Student;
   onEdit: () => void;
   onDelete: () => void;
+  onConvertToNurseAide: () => void;
   canEdit: boolean;
   canDelete: boolean;
+  canConvert: boolean;
 }
 
-const StudentDetails: React.FC<StudentDetailsProps> = ({ student, onEdit, onDelete, canEdit, canDelete }) => {
+const StudentDetails: React.FC<StudentDetailsProps> = ({ student, onEdit, onDelete, onConvertToNurseAide, canEdit, canDelete, canConvert }) => {
   return (
     <Card>
       <CardHeader>
@@ -619,6 +681,15 @@ const StudentDetails: React.FC<StudentDetailsProps> = ({ student, onEdit, onDele
             </div>
           </div>
           <div className="flex space-x-2">
+            {canConvert && (
+              <Button 
+                onClick={onConvertToNurseAide} 
+                className="bg-blue-600 hover:bg-blue-700 text-white"
+              >
+                <UserPlus className="w-4 h-4 mr-2" />
+                Convert to Nurse Aide
+              </Button>
+            )}
             {canEdit && (
               <Button onClick={onEdit} variant="outline" className="border-[#2E8B57] text-[#2E8B57] hover:bg-[#2E8B57]/10">
                 <Edit className="w-4 h-4 mr-2" />
