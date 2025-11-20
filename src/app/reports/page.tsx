@@ -9,9 +9,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import {
-  FileText,
   Download,
-  Calendar,
   Users,
   DollarSign,
   BookOpen,
@@ -19,23 +17,14 @@ import {
   BarChart3,
   PieChart,
   Filter,
-  Clock,
   Loader2,
   RefreshCw,
   AlertCircle
 } from 'lucide-react';
-import * as XLSX from 'xlsx';
 import {
   getComprehensiveReport,
   getDashboardStats,
-  getStudentStatistics,
-  getCourseStatistics,
-  getTransactionStatistics,
-  getBudgetStatistics,
   exportReportToExcel,
-  generateStudentPerformanceReport,
-  generateFinancialSummaryReport,
-  generateAttendanceSummaryReport,
   getErrorMessage,
   type ComprehensiveReport,
   type DashboardStats,
@@ -72,7 +61,7 @@ const ReportsManagement = () => {
   const [error, setError] = useState<string | null>(null);
   const [user, setUser] = useState<User | null>(null);
   const [branches, setBranches] = useState<Branch[]>([]);
-  const [courses, setCourses] = useState<Course[]>([]);
+  const [, setCourses] = useState<Course[]>([]);
   const [comprehensiveReport, setComprehensiveReport] = useState<ComprehensiveReport | null>(null);
   const [dashboardStats, setDashboardStats] = useState<DashboardStats | null>(null);
 
@@ -372,7 +361,7 @@ const ReportsManagement = () => {
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="all">All Branches</SelectItem>
-                      {branches.filter(branch => branch._id).map((branch, index) => (
+                      {branches.filter(branch => branch._id).map((branch) => (
                         <SelectItem key={branch._id} value={branch._id}>
                           {branch.name}
                         </SelectItem>
