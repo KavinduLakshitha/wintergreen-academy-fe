@@ -138,7 +138,7 @@ export default function ConvertToNurseAideDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="w-[90vw] max-w-5xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Convert Student to Nurse Aide</DialogTitle>
           <DialogDescription>
@@ -152,7 +152,7 @@ export default function ConvertToNurseAideDialog({
             <h3 className="text-lg font-semibold">Personal Information</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="name">Full Name *</Label>
+                <Label htmlFor="name" className="text-sm whitespace-nowrap">Full Name *</Label>
                 <Input
                   id="name"
                   value={formData.name || ''}
@@ -161,7 +161,7 @@ export default function ConvertToNurseAideDialog({
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="email">Email Address</Label>
+                <Label htmlFor="email" className="text-sm">Email Address</Label>
                 <Input
                   id="email"
                   type="email"
@@ -171,7 +171,7 @@ export default function ConvertToNurseAideDialog({
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="phone">Phone Number *</Label>
+                <Label htmlFor="phone" className="text-sm whitespace-nowrap">Phone Number *</Label>
                 <Input
                   id="phone"
                   value={formData.phone || ''}
@@ -180,7 +180,7 @@ export default function ConvertToNurseAideDialog({
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="joinDate">Join Date *</Label>
+                <Label htmlFor="joinDate" className="text-sm whitespace-nowrap">Join Date *</Label>
                 <Input
                   id="joinDate"
                   type="date"
@@ -192,7 +192,7 @@ export default function ConvertToNurseAideDialog({
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="address">Address</Label>
+              <Label htmlFor="address" className="text-sm">Address</Label>
               <Textarea
                 id="address"
                 value={formData.address || ''}
@@ -205,7 +205,7 @@ export default function ConvertToNurseAideDialog({
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="district">District</Label>
+                <Label htmlFor="district" className="text-sm">District</Label>
                 <Input
                   id="district"
                   value={formData.district || ''}
@@ -214,7 +214,7 @@ export default function ConvertToNurseAideDialog({
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="nicNumber">NIC Number</Label>
+                <Label htmlFor="nicNumber" className="text-sm">NIC Number</Label>
                 <Input
                   id="nicNumber"
                   value={formData.nicNumber || ''}
@@ -224,26 +224,37 @@ export default function ConvertToNurseAideDialog({
               </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="gender">Gender</Label>
-                <Select
-                  value={formData.gender ?? undefined}
-                  onValueChange={(value) => handleInputChange('gender', value)}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select gender" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="Male">Male</SelectItem>
-                    <SelectItem value="Female">Female</SelectItem>
-                    <SelectItem value="Other">Other</SelectItem>
-                    <SelectItem value="Prefer not to say">Prefer not to say</SelectItem>
-                  </SelectContent>
-                </Select>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="gender" className="text-sm">Gender</Label>
+                  <Select
+                    value={formData.gender ?? undefined}
+                    onValueChange={(value) => handleInputChange('gender', value)}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select gender" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Male">Male</SelectItem>
+                      <SelectItem value="Female">Female</SelectItem>
+                      <SelectItem value="Other">Other</SelectItem>
+                      <SelectItem value="Prefer not to say">Prefer not to say</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="callingName" className="text-sm">Calling Name</Label>
+                  <Input
+                    id="callingName"
+                    value={formData.callingName || ''}
+                    onChange={(e) => handleInputChange('callingName', e.target.value)}
+                    placeholder="Enter calling name"
+                  />
+                </div>
               </div>
               <div className="space-y-2">
-                <Label htmlFor="civilStatus">Civil Status</Label>
+                <Label htmlFor="civilStatus" className="text-sm">Civil Status</Label>
                 <Select
                   value={formData.civilStatus ?? undefined}
                   onValueChange={(value) => handleInputChange('civilStatus', value)}
@@ -261,15 +272,6 @@ export default function ConvertToNurseAideDialog({
                   </SelectContent>
                 </Select>
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="callingName">Calling Name</Label>
-                <Input
-                  id="callingName"
-                  value={formData.callingName || ''}
-                  onChange={(e) => handleInputChange('callingName', e.target.value)}
-                  placeholder="Enter calling name"
-                />
-              </div>
             </div>
           </div>
 
@@ -278,7 +280,7 @@ export default function ConvertToNurseAideDialog({
             <h3 className="text-lg font-semibold">Employment Details</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="position">Position *</Label>
+                <Label htmlFor="position" className="text-sm whitespace-nowrap">Position *</Label>
                 <Input
                   id="position"
                   value="Nurse Aide"
@@ -287,7 +289,7 @@ export default function ConvertToNurseAideDialog({
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="employmentType">Employment Type</Label>
+                <Label htmlFor="employmentType" className="text-sm">Employment Type</Label>
                 <Select
                   value={formData.employmentType || 'full-time'}
                   onValueChange={(value) => handleInputChange('employmentType', value)}
@@ -306,7 +308,7 @@ export default function ConvertToNurseAideDialog({
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="rate12Hour">12-Hour Rate (LKR) *</Label>
+                <Label htmlFor="rate12Hour" className="text-sm whitespace-nowrap">12-Hour Rate (LKR) *</Label>
                 <Input
                   id="rate12Hour"
                   type="number"
@@ -316,7 +318,7 @@ export default function ConvertToNurseAideDialog({
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="rate24Hour">24-Hour Rate (LKR) *</Label>
+                <Label htmlFor="rate24Hour" className="text-sm whitespace-nowrap">24-Hour Rate (LKR) *</Label>
                 <Input
                   id="rate24Hour"
                   type="number"
@@ -326,7 +328,7 @@ export default function ConvertToNurseAideDialog({
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="nurseGrade">Grade *</Label>
+                <Label htmlFor="nurseGrade" className="text-sm whitespace-nowrap">Grade *</Label>
                 <Select
                   value={formData.nurseGrade || ''}
                   onValueChange={(value) => handleInputChange('nurseGrade', value as 'A' | 'B' | 'C')}

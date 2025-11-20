@@ -18,9 +18,7 @@ import {
   TrendingDown, 
   CreditCard, 
   Wallet, 
-  Plus, 
-  Search, 
-  Download,
+  Plus,
   Edit,
   Trash2,
   AlertTriangle,
@@ -83,7 +81,7 @@ const FinanceManagement = () => {
   
   // Dialog states
   const [isAddingTransaction, setIsAddingTransaction] = useState(false);
-  const [isAddingBudget, setIsAddingBudget] = useState(false);
+  const [, setIsAddingBudget] = useState(false);
   const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null);
   const [editingBudget, setEditingBudget] = useState<Budget | null>(null);
   
